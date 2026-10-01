@@ -9,7 +9,7 @@ Shared GitHub repository for the group project. Folder structure only; implement
 - `database/migrations/` — table creation and update SQL scripts.
 - `database/seeds/` — demo data SQL scripts.
 - `docs/sprint-2/sections/` — each member’s written report sections.
-- `docs/sprint-2/diagrams/` — context, activity and use case diagrams.
+- `docs/sprint-2/diagrams/` — context, activity, and use case diagrams.
 - `docs/sprint-2/screenshots/` — GitHub board and implementation evidence.
 - `docs/sprint-2/final-report/` — assembled submission.
 
@@ -20,5 +20,3 @@ Shared GitHub repository for the group project. Folder structure only; implement
 - T: Section 5.
 - Jacob: Section 6.
 - Tristan: Section 7.
-
-Any redistribution of implementation work can be agreed on by the group.
