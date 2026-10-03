@@ -10,12 +10,23 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "concurrently --kill-others --names api,web \"npm run dev --workspace backend\" \"npm run dev --workspace frontend\"",
+    "dev": "concurrently --kill-others --names api,mobile \"npm run dev --workspace backend\" \"npm run dev --workspace frontend\"",
+    "dev:mobile": "npm run dev --workspace frontend",
+    "dev:api": "npm run dev --workspace backend",
+    "dev:web": "concurrently --kill-others --names api,web \"npm run dev --workspace backend\" \"npm run web --workspace frontend\"",
+    "android": "npm run android --workspace frontend",
+    "ios": "npm run ios --workspace frontend",
     "build": "npm run build --workspace frontend",
     "start": "npm run start --workspace backend",
-    "test": "npm run test --workspace backend"
+    "typecheck": "npm run typecheck --workspace frontend",
+    "test": "npm run test --workspace backend",
+    "check": "npm run typecheck && npm test && npm run build"
   },
   "devDependencies": {
     "concurrently": "^10.0.5"
+  },
+  "overrides": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
   }
 }

@@ -1,8 +1,13 @@
+/**
+ * @param {{ name?: string, email: string, password: string, confirmPassword?: string }} values
+ * @param {'login' | 'signup'} mode
+ * @returns {Record<string, string>}
+ */
 export function validateAuth(values, mode) {
   const errors = {};
   if (
     mode === "signup" &&
-    (!values.name.trim() || values.name.trim().length > 100)
+    (!values.name?.trim() || values.name.trim().length > 100)
   )
     errors.name = "Enter your name (up to 100 characters).";
   if (
