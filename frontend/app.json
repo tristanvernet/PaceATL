@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "PaceATL",
+    "slug": "paceatl",
+    "scheme": "paceatl",
+    "version": "0.2.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tristanvernet.paceatl"
+    },
+    "android": {
+      "package": "com.tristanvernet.paceatl"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "name": "PaceATL"
+    },
+    "plugins": ["expo-router"]
+  }
+}
