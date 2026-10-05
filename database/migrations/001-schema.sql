@@ -88,3 +88,23 @@ CREATE TABLE IF NOT EXISTS user_sessions (
   KEY session_expiry (expires_at),
   CONSTRAINT fk_session_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- T's reward feature: persisted activity totals and one award per user/badge.
+CREATE TABLE IF NOT EXISTS reward_activity_events (
+ activity_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ user_id INT NOT NULL,
+ activity_type VARCHAR(10) NOT NULL,
+ distance_miles DECIMAL(7,2) NOT NULL,
+ duration_minutes INT NOT NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ KEY reward_activity_user (user_id),
+ CONSTRAINT fk_reward_activity_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE IF NOT EXISTS user_achievements (
+ user_id INT NOT NULL,
+ achievement_key VARCHAR(50) NOT NULL,
+ earned_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ PRIMARY KEY (user_id, achievement_key),
+ CONSTRAINT fk_achievement_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

@@ -47,3 +47,7 @@ Signup/login/logout and session handlers now use MySQL. Tutorial list/detail han
 `npm run test:integration` exercises live signup, duplicate email rejection, login, completion ownership/persistence, session restoration, expiry and logout. Its disposable test accounts and completions are removed afterward.
 
 Driver reference: [MySQL2 documentation](https://sidorares.github.io/node-mysql2/docs).
+
+### Reward feature tables
+
+`npm run db:setup` also creates T’s `reward_activity_events` (signed-in user activity totals) and `user_achievements` (one saved award per user and badge). Both reference `users.id`. Existing challenge and workout tables are preserved. The rewards screen’s sample activity control is a test path, separate from the unfinished full workout logger.
