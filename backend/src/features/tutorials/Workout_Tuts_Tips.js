@@ -18,7 +18,7 @@ class TutorialStep {
 
 class WorkoutTut {
   constructor(tutId, title, category, difficultyLevel, targetMuscleGroup,
-              estimatedDurationMins, description, steps) {
+              estimatedDurationMins, description, steps, videoUrl = "") {
     this.tutId = tutId;
     this.title = title;
     this.category = category;
@@ -26,6 +26,7 @@ class WorkoutTut {
     this.targetMuscleGroup = targetMuscleGroup;
     this.estimatedDurationMins = estimatedDurationMins;
     this.description = description;
+    this.videoUrl = videoUrl;
     this.createdAt = new Date();
     this.steps = steps;
   }
@@ -43,23 +44,24 @@ class CompletedTut {
 const workoutTutsCatalog = [
   new WorkoutTut(
     "tut-01", "How to Improve Your Running Endurance?", "Form Tips", "Beginner",
-    "Full Body", 5,
+    "Full Body", 12,
     "Prevent fatigue and joint strain with a proper warmup before performing activities.",
     [
       new TutorialStep("s-01-1", "tut-01", 1,
-        "Start with short, manageable workouts and gradually increase your exercise time.",
+        "MORE HELP: Start with short, manageable workouts and gradually increase your exercise time.",
         null),
       new TutorialStep("s-01-2", "tut-01", 2,
-        "Maintain a steady pace instead of exercising at maximum intensity.",
+        "MORE HELP:  Maintain a steady pace instead of exercising at maximum intensity.",
         "You have no one to impress but yourself. Start slow and consistent!"),
       new TutorialStep("s-01-3", "tut-01", 3,
-        "Take short recovery breaks when needed and increase workout difficulty over time.",
+        "MORE HELP: Take short recovery breaks when needed and increase workout difficulty over time.",
         null),
-    ]
+    ],
+    "https://youtu.be/Hr6FbA3xr7I?si=RkurLNUgaqZhaX7u"
   ),
   new WorkoutTut(
     "tut-02", "How to Properly Warm Up Before a Workout?", "Warmup", "Beginner",
-    "Legs & Core", 8,
+    "Legs & Core", 15,
     "Prepare muscles and joints before tackling high-elevation routes.",
     [
       new TutorialStep("s-02-1", "tut-02", 1,
@@ -71,21 +73,35 @@ const workoutTutsCatalog = [
       new TutorialStep("s-02-4", "tut-02", 4,
         "Perform dynamic stretches such as leg swings and arm circles.",
         "Start slowly with few reps, then increase your pace."),
+      new TutorialStep("s-02-5", "tut-02", 5,
+        "Complete 10 walking lunges with a gentle torso twist on each side.", null),
+      new TutorialStep("s-02-6", "tut-02", 6,
+        "Do 10 arm circles forward and 10 backward.",
+        "Keep your shoulders relaxed."),
+      new TutorialStep("s-02-7", "tut-02", 7,
+        "Perform high knees for 30 seconds.",null),
+        new TutorialStep("s-02-8", "tut-02", 7,
+        "Perform high knees for 30 seconds.", null),
+      new TutorialStep("s-02-9", "tut-02", 7,
+        "Perform high knees for 30 seconds.", null),
+      new TutorialStep("s-02-9", "tut-02", 7,
+        "Finish this with 1-2 minutes of light jogging", "The overall goal is to get your heart pumping and ready to exercise. Not to be tired!!!"),
     ]
   ),
   new WorkoutTut(
     "tut-03", "How to Recover you lower body after a run?", "Recovery", "Intermediate",
-    "Hamstrings & Calves", 10,
+    "Hamstrings & Calves", 12,
     "Minimize muscle soreness and improve recovery time after long workouts.",
     [
       new TutorialStep("s-03-1", "tut-03", 1,
-        "Hold standing quad stretch for 30 seconds each side.",
-        "Drink water in between or after these steps to ensure hydration and recovery of the body. "),
+        "MORE HELP: Hold standing quad stretch for 30 seconds each side.",
+        "MORE HELP:  Drink water in between or after these steps to ensure hydration and recovery of the body. "),
       new TutorialStep("s-03-2", "tut-03", 2,
-        "Seated hamstring fold held for 45 seconds.", null),
+        "MORE HELP:  Seated hamstring fold held for 45 seconds.", null),
       new TutorialStep("s-03-3", "tut-03", 3,
-        "Standing calf stretch against wall for 30 seconds.", null),
-    ]
+        "MORE HELP:  Standing calf stretch against wall for 30 seconds.", null),
+    ],
+    "https://youtu.be/bKLn7xp-q48?si=dwAby6tcZZVecJkO"
   ),
 ];
 
