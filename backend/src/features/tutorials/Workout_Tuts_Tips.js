@@ -89,7 +89,7 @@ const workoutTutsCatalog = [
     ]
   ),
   new WorkoutTut(
-    "tut-03", "How to Recover you lower body after a run?", "Recovery", "Intermediate",
+    "tut-03", "How to Recover your lower body after a run?", "Recovery", "Intermediate",
     "Hamstrings & Calves", 12,
     "Minimize muscle soreness and improve recovery time after long workouts.",
     [
