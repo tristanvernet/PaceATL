@@ -3,17 +3,24 @@ import {useRouter} from "expo-router";
 import {Screen, Heading, BackButton, Card, Label, Button, Notice}
   from "../../components/ui";
 import { apiRequest } from "../../api/client";
+import type { Tutorial } from "./types";
 
 export default function TutorialsScreen() {
   const router = useRouter();
-  const [tutorials, setTutorials] = useState<any[]>([]);
+  const [tutorials, setTutorials] = useState<Tutorial[]>([]);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
-    apiRequest<any[]>("/api/tutorials")
-      .then(setTutorials)
-      .catch((e) => setError(e.message));
-  }, []);
+    const controller = new AbortController();
+    setLoading(true); setError("");
+    apiRequest<Tutorial[]>("/api/tutorials", { signal: controller.signal })
+      .then((data) => { if (!controller.signal.aborted) setTutorials(data); })
+      .catch((e) => { if (!controller.signal.aborted) setError(e.message); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [retry]);
 
   return (
     <Screen>
@@ -24,6 +31,9 @@ export default function TutorialsScreen() {
       />
 
       {!!error && <Notice text={error} error />}
+      {!!error && <Button title="Try again" onPress={() => setRetry(retry + 1)} />}
+      {loading && <Notice text="Loading tutorials…" />}
+      {!loading && !error && !tutorials.length && <Notice text="No tutorials are available yet." />}
 
       {tutorials.map((tut) => (
         <Card key={tut.tutId}>
@@ -41,7 +51,6 @@ export default function TutorialsScreen() {
         </Card>
       ))}
 
-      <Notice text="Preview: tutorial content is sample data until the database is connected." />
     </Screen>
   );
 }

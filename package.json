@@ -20,7 +20,11 @@
     "start": "npm run start --workspace backend",
     "typecheck": "npm run typecheck --workspace frontend",
     "test": "npm run test --workspace backend",
-    "check": "npm run typecheck && npm test && npm run build"
+    "check": "npm run typecheck && npm test && npm run build",
+    "db:check": "npm run db:check --workspace backend",
+    "db:setup": "npm run db:setup --workspace backend",
+    "db:seed": "npm run db:seed --workspace backend",
+    "test:integration": "npm run test:integration --workspace backend"
   },
   "devDependencies": {
     "concurrently": "^10.0.5"

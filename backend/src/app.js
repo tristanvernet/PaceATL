@@ -3,6 +3,9 @@ import { fileURLToPath } from "node:url";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { tutorialsRouter } from "./features/tutorials/router.js";
+import { authRouter } from "./features/auth/router.js";
+import { AuthError } from "./features/auth/service.js";
+import { TutorialError } from "./features/tutorials/Workout_Tuts_Tips.js";
 export const app = express();
 app.disable("x-powered-by");
 // Only explicitly configured browser previews can read API responses.
@@ -23,11 +26,13 @@ app.use("/api", (req, res, next) => {
   next();
 });
 app.use(express.json({ limit: "100kb" }));
+app.use("/api", (req, res, next) => { res.set("Cache-Control", "no-store"); next(); });
 app.get("/api/health", (req, res) =>
   res.json({ data: { status: "ok", service: "PaceATL" } }),
 );
 // Add feature routers above this API not-found handler.
 app.use("/api/tutorials", tutorialsRouter);
+app.use("/api/auth", authRouter);
 app.use("/api", (req, res) =>
   res
     .status(404)
@@ -48,6 +53,8 @@ app.use((req, res) =>
 );
 app.use((error, req, res, next) => {
   if (res.headersSent) return next(error);
+  if (error instanceof AuthError || error instanceof TutorialError)
+    return res.status(error.status).json({ error: { code: error.code, message: error.message } });
   const status = error.status >= 400 && error.status < 600 ? error.status : 500;
   res.status(status).json({
     error: {
