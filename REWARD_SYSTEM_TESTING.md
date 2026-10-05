@@ -5,7 +5,7 @@
 - Profile and Home links to the reward screen.
 - Four badges: First Step (1 workout), Getting Consistent (5 workouts), Five Mile Club (5 total miles), and Hour of Power (60 total minutes).
 - Authenticated reward API at `GET /api/rewards/` and `POST /api/rewards/activity`.
-- Database tables `reward_activity_events` and `user_achievements` created by the existing database setup/upgrade flow.
+- Database tables `reward_activity_events` and `user_achievements` created by `database/migrations/001-schema.sql` through `npm run db:setup`.
 - Client and server validation plus readable success/error messages.
 - Unit tests for activity validation and badge thresholds.
 
@@ -31,3 +31,10 @@
 Run `npm test` after dependencies are installed. `backend/tests/rewards.test.js` tests validation and achievement thresholds. Run `npm run typecheck` for the frontend TypeScript check.
 
 The sample-workout control is intentionally labeled as a test path because the repository's full workout logger is still marked unfinished. When that logger is completed, it can call the same `POST /api/rewards/activity` logic after a real workout is saved, or the reward service can be invoked from the workout backend transaction.
+
+## Integration verification (October 5, 2026)
+- 18 automated unit/API tests passed.
+- Live MySQL tests passed: all four badge thresholds, concurrent submissions without duplicate awards, account isolation and persistence across a server restart.
+- TypeScript and iOS/Android/web exports passed.
+- Browser checks passed: navigation, sign-in requirement, validation, badge unlocks and refresh persistence.
+- Physical phone testing remains pending.

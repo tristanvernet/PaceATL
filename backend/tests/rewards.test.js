@@ -14,3 +14,12 @@ test("badge rules unlock at documented thresholds", () => {
   const stats={workoutCount:5,totalDistanceMiles:5,totalMinutes:60};
   assert.deepEqual(BADGES.filter(b=>b.test(stats)).map(b=>b.key), ["first_workout","five_workouts","five_miles","hour_active"]);
 });
+
+ test("validation rejects coercion and sub-minute activities", () => {
+  for (const value of [null, true, "1", {}, []]) {
+   assert.throws(() => validateActivity({activityType:"run",distanceMiles:value,durationMinutes:20}), RewardError);
+  }
+  assert.throws(() => validateActivity({activityType:"run",distanceMiles:1,durationMinutes:0.4}), /Duration/);
+  const before={workoutCount:0,totalDistanceMiles:4.99,totalMinutes:59};
+  assert.equal(BADGES.filter(b=>b.test(before)).length,0);
+ });

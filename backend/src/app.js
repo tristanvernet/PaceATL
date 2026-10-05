@@ -6,6 +6,8 @@ import { tutorialsRouter } from "./features/tutorials/router.js";
 import { authRouter } from "./features/auth/router.js";
 import { AuthError } from "./features/auth/service.js";
 import { TutorialError } from "./features/tutorials/Workout_Tuts_Tips.js";
+import { rewardsRouter } from "./features/rewards/router.js";
+import { RewardError } from "./features/rewards/service.js";
 export const app = express();
 app.disable("x-powered-by");
 // Only explicitly configured browser previews can read API responses.
@@ -33,6 +35,7 @@ app.get("/api/health", (req, res) =>
 // Add feature routers above this API not-found handler.
 app.use("/api/tutorials", tutorialsRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/rewards", rewardsRouter);
 app.use("/api", (req, res) =>
   res
     .status(404)
@@ -53,7 +56,7 @@ app.use((req, res) =>
 );
 app.use((error, req, res, next) => {
   if (res.headersSent) return next(error);
-  if (error instanceof AuthError || error instanceof TutorialError)
+  if (error instanceof AuthError || error instanceof TutorialError || error instanceof RewardError)
     return res.status(error.status).json({ error: { code: error.code, message: error.message } });
   const status = error.status >= 400 && error.status < 600 ? error.status : 500;
   res.status(status).json({

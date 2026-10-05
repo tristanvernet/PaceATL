@@ -74,9 +74,9 @@ export default function ProfileScreen() {
       </Card>
       <Card>
         <Label>Achievements & preferences</Label>
+        <Button title="My Achievements" onPress={() => router.push("/achievements")} />
         <Label secondary>
-          Fitness preferences and earned rewards will live here after
-          their implementation.
+          View the badges you earn as you record activity.
         </Label>
       </Card>
       <Card>

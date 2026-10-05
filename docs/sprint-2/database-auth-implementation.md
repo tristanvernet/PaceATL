@@ -25,3 +25,13 @@ Command-line checks: `npm run typecheck`, `npm test`, `npm run test:integration`
 Browser checks passed for login validation, successful login, session restoration after reload, database tutorial loading, saved completion after reload, and logout. Screenshot evidence is in `screenshots/database-account.png`, `database-signup.png`, `database-login-validation.png`, `database-tutorial-library.png`, `database-tutorial-detail.png`, and `database-logged-out.png`. The browser test account was temporary and removed after verification. Include these screenshots in the final group report; physical-phone testing remains outstanding. Exporting native bundles does not produce signed installable app binaries. Future maps, workout logging and T's selected feature are not implemented by this contribution.
 
 References: [Node crypto](https://nodejs.org/api/crypto.html), [OWASP password storage](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html), [Expo SecureStore](https://docs.expo.dev/versions/v54.0.0/sdk/securestore/).
+
+## T’s reward feature integration
+
+T’s reward screen, badge rules, API and tests were moved from repository-root uploads into the frontend and backend feature folders. Home and Profile now link to `/achievements`, and Express mounts `/api/rewards`.
+
+The additive setup script creates `reward_activity_events` and `user_achievements`. Activities belong to the signed-in user; the server ignores user IDs supplied by clients. An activity and its eligible badge awards commit in one transaction, and each user/badge pair is unique. The four badges are First Step (one activity), Getting Consistent (five activities), Five Mile Club (five miles), and Hour of Power (60 minutes).
+
+Validation rejects malformed values, negative distance and durations below one minute. All 18 unit/API tests pass. Live MySQL checks cover all badge thresholds, simultaneous activity submissions, no duplicate awards, user isolation and persistence after restarting the server. TypeScript checks and iOS, Android and web exports pass. Browser checks confirm Home/Profile navigation, sign-in protection, invalid input, unlock messages and persistence after refresh. Physical phone testing remains pending.
+
+The screen intentionally labels its activity entry as **Add sample workout**. It demonstrates reward persistence; the full workout logger is still unfinished. Screenshot: `screenshots/rewards-unlocked.png`.

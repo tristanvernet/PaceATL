@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { View } from "react-native";
 import { useRouter } from "expo-router";
 import { apiRequest } from "../../api/client";
 import { BackButton, Button, Card, Field, Heading, Label, Notice, Screen } from "../../components/ui";
@@ -14,7 +13,17 @@ export function RewardsScreen() {
   const [data,setData]=useState<Rewards|null>(null); const [error,setError]=useState(""); const [notice,setNotice]=useState("");
   const [distance,setDistance]=useState("1"); const [minutes,setMinutes]=useState("20"); const [loading,setLoading]=useState(false);
   async function load(){ if(!user)return; setLoading(true); setError(""); try{setData(await apiRequest<Rewards>("/api/rewards/"));}catch(e){setError(e instanceof Error?e.message:"Could not load achievements.");}finally{setLoading(false);} }
-  useEffect(()=>{void load();},[user?.id]);
+  useEffect(()=>{
+    const controller = new AbortController();
+    setData(null); setError(""); setNotice("");
+    if (!ready || !user) return () => controller.abort();
+    setLoading(true);
+    apiRequest<Rewards>("/api/rewards/", {signal: controller.signal})
+      .then(result => { if (!controller.signal.aborted) setData(result); })
+      .catch(e => { if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "Could not load achievements."); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  },[ready,user?.id]);
   async function addTestWorkout(){
     const d=Number(distance), m=Number(minutes); setError(""); setNotice("");
     if(!Number.isFinite(d)||d<0||d>500){setError("Distance must be between 0 and 500 miles.");return;}
