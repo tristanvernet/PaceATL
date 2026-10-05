@@ -1,17 +1,18 @@
 # PaceATL
 
-Installable iPhone/Android app foundation built with React Native, Expo and Expo Router. Express provides the backend; MySQL integration will follow Jacob's schema. The Expo web preview uses the same screen code for convenient layout review.
+Installable iPhone/Android app foundation built with React Native, Expo and Expo Router. Express provides the backend; MySQL connection and setup scripts use Jacob's schema. The Expo web preview uses the same screen code for convenient layout review.
 
 ## What works now
 
 - Home, Routes, Learn and Profile navigation, plus back navigation to feature detail and account screens.
 - Shared colors, spacing, screen layout, buttons, fields, notices and loading states with light/dark appearance.
-- Signup/login preview validation and password visibility. No account data is sent, stored or authenticated.
+- Database-backed signup, login, logout and seven-day sessions. Passwords use salted scrypt hashes; session tokens are hashed in MySQL.
 - Routes: Explore, Hotspots, Build and Saved views with clearly labeled map placeholders.
-- Tutorial list/detail starting screens and a shared structure for teammates' chosen features.
+- Database-backed tutorial library, instructions, tips and videos using Iyana's content. Signed-in users can save completion and see it again after reopening the app.
+- MySQL connection checks and repeatable database setup scripts. See [database setup](database/README.md).
 - Shared API client with configurable address, timeout and readable error handling; Profile can check the real backend `/api/health` endpoint.
 
-Maps, location access, tutorial content, database access, sessions and protected accounts are not implemented. Open navigation is intentional for this development preview.
+Maps, location access, workout logging, progress tools and T's selected feature remain unfinished. Browsing tutorials is public; saving completion requires a valid session. Administrator functionality and roles are not implemented because current features use ordinary user accounts only.
 
 ## Install and run
 
@@ -40,11 +41,24 @@ Copy `backend/.env.example` to `backend/.env`. Its `HOST=0.0.0.0` lets a phone o
 
 `EXPO_PUBLIC_*` values are public app configuration. Never put database passwords, private service keys or account secrets there. Database credentials belong only in backend configuration. Local HTTP is for development; a distributed app must use a reachable HTTPS backend.
 
+## Database setup
+
+Put Jacob's connection details in the ignored `backend/.env`, then run from the root:
+
+```sh
+npm run db:check
+npm run db:setup
+npm run db:seed
+```
+
+The seed imports Iyana's tutorial content without replacing existing tutorials. See [database instructions](database/README.md). `npm run test:integration` verifies the real database with temporary test accounts and removes only records created by that check.
+
 ## Validate and build
 
 ```sh
 npm run typecheck
 npm test
+npm run test:integration
 npm run build
 ```
 

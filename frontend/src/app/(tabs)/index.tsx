@@ -36,7 +36,7 @@ export default function HomeScreen() {
           onPress={() => router.push("/progress")}
         />
       </View>
-      <Notice text="Preview navigation is open for development. Accounts, workouts and feature data are not connected yet." />
+      <Notice text="Browse tutorials freely. Sign in to save completion. Maps, workout logging and progress tools are still in development." />
     </Screen>
   );
 }

@@ -11,10 +11,14 @@ import {
   Notice,
 } from "../../components/ui";
 import { useTheme } from "../../theme";
+import { apiRequest } from "../../api/client";
+import { useSession, type SignInResult } from "./SessionProvider";
 
 export default function AuthScreen({ mode }: { mode: "login" | "signup" }) {
   const router = useRouter();
   const c = useTheme();
+  const session = useSession();
+  const [loading, setLoading] = useState(false);
   const [values, setValues] = useState({
     name: "",
     email: "",
@@ -29,22 +33,28 @@ export default function AuthScreen({ mode }: { mode: "login" | "signup" }) {
     setErrors((current) => ({ ...current, [key]: "" }));
     setNotice("");
   }
-  function submit() {
+  async function submit() {
     const next = validateAuth(values, mode);
     setErrors(next);
-    setNotice(
-      Object.keys(next).length
-        ? "Check the highlighted fields."
-        : "The form passes preview validation. No account data has been saved or sent; database access is not connected.",
-    );
+    if (Object.keys(next).length) { setNotice("Check the highlighted fields."); return; }
+    setLoading(true); setNotice("");
+    try {
+      const result = await apiRequest<SignInResult>(`/api/auth/${mode}`, {
+        method: "POST", body: JSON.stringify(values),
+      });
+      await session.signIn(result);
+      setValues({ name: "", email: "", password: "", confirmPassword: "" });
+      router.replace("/profile");
+    } catch (e) { setNotice(e instanceof Error ? e.message : "Unable to sign in."); }
+    finally { setLoading(false); }
   }
   return (
     <Screen>
       <BackButton />
       <Heading
-        eyebrow="Account preview"
+        eyebrow="Your account"
         title={mode === "signup" ? "Create your account" : "Welcome back"}
-        subtitle="Account screens are ready for database integration later."
+        subtitle={mode === "signup" ? "Save your progress with a PaceATL account." : "Sign in to keep track of your tutorials."}
       />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -103,16 +113,17 @@ export default function AuthScreen({ mode }: { mode: "login" | "signup" }) {
           </Text>
         </Pressable>
         <Button
-          title={mode === "signup" ? "Check signup form" : "Check login form"}
+          title={mode === "signup" ? "Sign up" : "Log in"}
           onPress={submit}
+          loading={loading}
+          disabled={!session.ready}
         />
         {notice && (
           <Notice
             text={notice}
-            error={Object.keys(errors).some((key) => errors[key])}
+            error
           />
         )}
-        <Notice text="Preview only. Use sample information. Registration, login, sessions and logout are not implemented." />
         <Button
           title={mode === "signup" ? "View login screen" : "View signup screen"}
           secondary

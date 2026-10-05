@@ -14,7 +14,7 @@ The frontend uses React Native and TypeScript (`.tsx` screens). Home, Routes, Le
 
 The shared components can save some setup time: Screen handles scrolling and safe areas; Button supports loading/disabled states; Field supports labels and validation messages; Notice displays status or errors. If a shared component or navigation link needs changing, we can coordinate that so our changes fit together.
 
-Account access is still a preview while the database is being prepared. Authentication and permissions will be connected in the backend as part of that work.
+Account signup, login, logout and sessions are now connected to MySQL. `useSession` provides the current user in frontend screens, and `apiRequest` includes the session token automatically. Backend features can use `sessionUser(req)` to identify the signed-in user.
 
 ## Iyana — Workout Tips and Tutorials
 
@@ -26,16 +26,13 @@ These starting files are already linked to the Learn tab:
 - `frontend/src/app/tutorials/[id].tsx`: connects tutorial detail screens; `useLocalSearchParams` provides the selected `id`.
 - `backend/src/features/tutorials/router.js`: a starting place for tutorial requests, already connected at `/api/tutorials`.
 
-You can work on the layout before the database is ready using labeled sample records in your feature folder. Keeping those separate from the API code makes it easier to replace them with real records later. A small preview label helps everyone tell sample content apart from connected data.
+Your existing screens and content are now connected to Jacob's MySQL tables. The database layer is in `backend/src/features/tutorials/repository.js`.
 
-For the data connection, one possible starting point is:
+- GET `/api/tutorials`: the tutorial library.
+- GET `/api/tutorials/:id`: instructions, media and the signed-in user's completion status.
+- POST `/api/tutorials/:id/complete`: saves completion for the authenticated user.
 
-- GET `/api/tutorials`: a list with `id`, `title`, `activityType` and `summary`.
-- GET `/api/tutorials/:id`: one tutorial, including its instructions and optional media URL.
-
-Those endpoints aren't implemented yet; the field names and formats are suggestions we can work out with Jacob based on your feature design. Inside the existing backend router, the paths would be `/` and `/:id`, since `/api/tutorials` is already attached.
-
-When the connection is ready, loading messages and a retry option can help users understand what's happening. For Sprint 2, screenshots of browsing a tutorial and opening its instructions would be useful evidence alongside the database integration.
+The original field names (`tutId`, `difficultyLevel`, `instructionText`, etc.) are preserved in API responses so the screens keep the same structure. Tutorial completion can now be restored after signing back in. The seed script uses your content and skips existing tutorials. Repeated identical instructions and duplicate step identifiers in the warmup seed were normalized to fit the database constraints.
 
 ## T — when you choose your feature
 
@@ -49,13 +46,13 @@ The foundation is available for whichever feature you choose. Here's one way to 
 
 Labeled sample data can help you develop the interface while the database is being prepared. Your feature choice and screen flow are open; there's no preselected feature or feature-specific scaffold for you.
 
-## Connecting to the backend later
+## Connecting to the backend
 
 The shared `apiRequest` helper takes a path beginning with `/api/`. It returns the data from the response and provides readable errors for connection problems or failed requests. For JSON writes, it accepts a method and `body: JSON.stringify(values)`.
 
 The existing response format is `{ data: ... }` for successful requests and `{ error: { code, message } }` for errors. Following that format lets each screen use the same connection helper. Input validation and any account permissions can live with the backend feature handlers.
 
-The tutorial router currently falls through to the shared not-found response because its handlers haven't been added. The signup/login previews also keep their data local. Session handling will be added when account access is connected.
+The tutorial and account routers now have database-backed handlers. Protected writes can use the backend session helper rather than accepting a user ID from the screen.
 
 The frontend's environment file holds the public backend address; database credentials stay in the backend. The README explains phone connection setup, and Profile has a connection check that works without the database.
 

@@ -1,34 +1,48 @@
 import {useEffect, useState} from "react";
 
-import {useLocalSearchParams} from "expo-router";
+import {useLocalSearchParams, useRouter} from "expo-router";
 import {Screen, Heading, BackButton, Card, Label, Button, Notice} from "../../components/ui";
-import {apiRequest} from "../../api/client";
+import {apiRequest, ApiError} from "../../api/client";
 import {Linking, Platform} from "react-native";
+import {useSession} from "../auth/SessionProvider";
+import type { Tutorial } from "./types";
 
 const Iframe: any = "iframe";
 export default function TutorialDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [tutorial, setTutorial] = useState<any>(null);
+  const router = useRouter();
+  const session = useSession();
+  const [tutorial, setTutorial] = useState<Tutorial | null>(null);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [retry, setRetry] = useState(0);
 
   function getYouTubeEmbedUrl(url: string) {
   const videoId=url.split("youtu.be/")[1]?.split("?")[0];
   return `https://www.youtube.com/embed/${videoId}`;
 }
   useEffect(() => {
-    apiRequest<any>(`/api/tutorials/${id}`)
-      .then(setTutorial)
-      .catch((e) => setError(e.message));
-  }, [id]);
+    if (!session.ready) return;
+    const controller = new AbortController();
+    setTutorial(null); setDone(false); setError("");
+    apiRequest<Tutorial>(`/api/tutorials/${encodeURIComponent(id)}`, { signal: controller.signal })
+      .then((data) => {
+        if (!controller.signal.aborted) { setTutorial(data); setDone(data.completed); }
+      })
+      .catch((e) => { if (!controller.signal.aborted) setError(e.message); });
+    return () => controller.abort();
+  }, [id, session.ready, session.user?.id, retry]);
 
-  function markCompleted() {
-    apiRequest(`/api/tutorials/${id}/complete`, {
-      method: "POST",
-      body: JSON.stringify({ userId: "user" }),
-    })
-      .then(() => setDone(true))
-      .catch((e) => setError(e.message));
+  async function markCompleted() {
+    setLoading(true); setError("");
+    try {
+      await apiRequest(`/api/tutorials/${encodeURIComponent(id)}/complete`, { method: "POST" });
+      setDone(true);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) await session.refresh();
+      setError(e instanceof Error ? e.message : "Unable to save completion.");
+    } finally { setLoading(false); }
   }
 
   return (
@@ -41,6 +55,8 @@ export default function TutorialDetailScreen() {
       />
 
       {!!error && <Notice text={error} error />}
+      {!!error && !tutorial && <Button title="Try again" onPress={() => setRetry(retry + 1)} />}
+      {!tutorial && !error && <Notice text="Loading tutorial…" />}
 
       {tutorial && (
         <>
@@ -64,12 +80,12 @@ export default function TutorialDetailScreen() {
             {!!tutorial.videoUrl && Platform.OS !== "web" && (
               <Button
                 title="Watch video"
-                onPress={() => Linking.openURL(tutorial.videoUrl)}
+                onPress={() => { void Linking.openURL(tutorial.videoUrl).catch(() => setError("Could not open the video.")); }}
               />
             )}
           </Card>
 
-          {tutorial.steps.map((step: any) => (
+          {tutorial.steps.map((step) => (
             <Card key={step.stepId}>
               <Label>
                 Step {step.stepNumber}: {step.instructionText}
@@ -78,10 +94,12 @@ export default function TutorialDetailScreen() {
             </Card>
           ))}
 
-          {done ? (
-            <Notice text="Nice work! This tutorial was marked as completed." />
+          {!session.user ? (
+            <Button title="Log in to save completion" onPress={() => router.push("/login")} />
+          ) : done ? (
+            <Notice text="Nice work! This tutorial is saved as completed." />
           ) : (
-            <Button title="Mark as done" onPress={markCompleted} />
+            <Button title="Mark as done" onPress={markCompleted} loading={loading} />
           )}
         </>
       )}

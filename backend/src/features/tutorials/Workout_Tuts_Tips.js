@@ -32,16 +32,7 @@ class WorkoutTut {
   }
 }
 
-class CompletedTut {
-  constructor(completionId, userId, tutorialId) {
-    this.completionId = completionId;
-    this.userId = userId;
-    this.tutorialId = tutorialId;
-    this.completedAt = new Date();
-  }
-}
-
-const workoutTutsCatalog = [
+export const workoutTutsCatalog = [
   new WorkoutTut(
     "tut-01", "How to Improve Your Running Endurance?", "Form Tips", "Beginner",
     "Full Body", 12,
@@ -104,42 +95,3 @@ const workoutTutsCatalog = [
     "https://youtu.be/bKLn7xp-q48?si=dwAby6tcZZVecJkO"
   ),
 ];
-
-const completedTutsLogs = [];
-let completionCounter = 0;
-
-export function listTutorials(category) {
-  if (category === undefined) {
-    return [...workoutTutsCatalog];
-  }
-  if (String(category).trim() === "") {
-    throw new TutorialError("ERROR", "Error: Category filter cannot be blank.", 400);
-  }
-  return workoutTutsCatalog.filter(
-    (tut) => tut.category.toLowerCase() === String(category).trim().toLowerCase()
-  );
-}
-
-export function getTutorial(tutId) {
-  const cleanId = String(tutId ?? "").trim().toLowerCase();
-  const found = workoutTutsCatalog.find((tut) => tut.tutId.toLowerCase() === cleanId);
-  if (!found) {
-    throw new TutorialError("ERROR", "Tutorial not found.", 404);
-  }
-  return found;
-}
-
-export function logCompleted(userId, tutId) {
-  if (!userId || String(userId).trim() === "" || !tutId || String(tutId).trim() === "") {
-    throw new TutorialError("ERROR", "Error: User ID and Tutorial ID are required.", 400);
-  }
-  const found = getTutorial(tutId);
-  completionCounter++;
-  const record = new CompletedTut("comp-" + completionCounter, String(userId).trim(), found.tutId);
-  completedTutsLogs.push(record);
-  return record;
-}
-
-export function getCompletedTuts(userId) {
-  return completedTutsLogs.filter((c) => c.userId === userId);
-}

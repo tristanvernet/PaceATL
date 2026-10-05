@@ -10,9 +10,19 @@ import {
   Notice,
 } from "../../components/ui";
 import { apiRequest } from "../../api/client";
+import { useSession } from "../../features/auth/SessionProvider";
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const session = useSession();
+  const [signingOut, setSigningOut] = useState(false);
+  const [authError, setAuthError] = useState("");
+  async function logout() {
+    setSigningOut(true); setAuthError("");
+    try { await session.signOut(); }
+    catch (e) { setAuthError(e instanceof Error ? e.message : "Unable to log out."); }
+    finally { setSigningOut(false); }
+  }
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const pending = useRef<AbortController | null>(null);
@@ -47,23 +57,25 @@ export default function ProfileScreen() {
     <Screen>
       <Heading eyebrow="Your account" title="Your pace. Your profile." />
       <Card>
-        <Label>Account screens</Label>
-        <Label secondary>
-          Preview the shared account forms while Jacob prepares the database.
-        </Label>
-        <View style={{ gap: 12 }}>
-          <Button title="View login" onPress={() => router.push("/login")} />
+        <Label>{session.user ? `Welcome, ${session.user.name}` : "Your account"}</Label>
+        {session.user ? <>
+          <Label secondary>{session.user.email}</Label>
+          <Button title="Log out" loading={signingOut} onPress={logout} />
+        </> : <View style={{ gap: 12 }}>
+          <Button title="Log in" disabled={!session.ready} onPress={() => router.push("/login")} />
           <Button
-            title="View signup"
+            title="Sign up"
             secondary
             onPress={() => router.push("/signup")}
           />
-        </View>
+        </View>}
+        {(authError || session.error) && <Notice text={authError || session.error} error />}
+        {session.error && <Button title="Retry session check" onPress={() => { void session.refresh(); }} />}
       </Card>
       <Card>
         <Label>Achievements & preferences</Label>
         <Label secondary>
-          Fitness preferences, earned rewards and sign-out will live here after
+          Fitness preferences and earned rewards will live here after
           their implementation.
         </Label>
       </Card>
@@ -80,7 +92,6 @@ export default function ProfileScreen() {
         />
         {status && <Notice text={status} />}
       </Card>
-      <Notice text="No user is signed in. This is an open development preview, not a protected account screen." />
     </Screen>
   );
 }

@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import { getSessionToken } from "../features/auth/session-storage";
 
 export class ApiError extends Error {
   constructor(
@@ -33,6 +34,8 @@ export async function apiRequest<T>(
   try {
     const headers = new Headers(options.headers);
     headers.set("Accept", "application/json");
+    const token = getSessionToken();
+    if (token) headers.set("Authorization", `Bearer ${token}`);
     if (
       options.body &&
       !headers.has("Content-Type") &&
