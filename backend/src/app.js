@@ -8,6 +8,8 @@ import { AuthError } from "./features/auth/service.js";
 import { TutorialError } from "./features/tutorials/Workout_Tuts_Tips.js";
 import { rewardsRouter } from "./features/rewards/router.js";
 import { RewardError } from "./features/rewards/service.js";
+import { routesRouter } from "./features/routes/router.js";
+import { RouteError } from "./features/routes/service.js";
 export const app = express();
 app.disable("x-powered-by");
 // Only explicitly configured browser previews can read API responses.
@@ -36,6 +38,7 @@ app.get("/api/health", (req, res) =>
 app.use("/api/tutorials", tutorialsRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/rewards", rewardsRouter);
+app.use("/api/routes", routesRouter);
 app.use("/api", (req, res) =>
   res
     .status(404)
@@ -56,7 +59,7 @@ app.use((req, res) =>
 );
 app.use((error, req, res, next) => {
   if (res.headersSent) return next(error);
-  if (error instanceof AuthError || error instanceof TutorialError || error instanceof RewardError)
+  if (error instanceof AuthError || error instanceof TutorialError || error instanceof RewardError || error instanceof RouteError)
     return res.status(error.status).json({ error: { code: error.code, message: error.message } });
   const status = error.status >= 400 && error.status < 600 ? error.status : 500;
   res.status(status).json({
