@@ -2,13 +2,16 @@ import { View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../theme";
 export type RouteMode = "Explore" | "Hotspots" | "Build" | "Saved";
-export function MapPlaceholder({ mode }: { mode: RouteMode }) {
+export function MapPlaceholder({
+  mode,
+}: {
+  mode: Exclude<RouteMode, "Build">;
+}) {
   const c = useTheme();
   const descriptions = {
     Explore: "Streets, trails and route previews from the chosen map service.",
     Hotspots:
       "Popular running and walking areas, once a data source is selected.",
-    Build: "Starting point and calculated path from a routing service.",
     Saved: "A selected saved path, with download status when available.",
   };
   return (
