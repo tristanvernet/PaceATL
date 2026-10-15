@@ -7,12 +7,12 @@ Installable iPhone/Android app foundation built with React Native, Expo and Expo
 - Home, Routes, Learn and Profile navigation, plus back navigation to feature detail and account screens.
 - Shared colors, spacing, screen layout, buttons, fields, notices and loading states with light/dark appearance.
 - Database-backed signup, login, logout and seven-day sessions. Passwords use salted scrypt hashes; session tokens are hashed in MySQL.
-- Routes: Explore, Hotspots, Build and Saved views with clearly labeled map placeholders.
+- Routes: draw a route on an OpenStreetMap map in Build, then name and save it to your account. Saved lists your routes with distance and date, shows the selected one on the map, and deletes with a confirmation. Explore and Hotspots are still labeled map placeholders.
 - Database-backed tutorial library, instructions, tips and videos using Iyana's content. Signed-in users can save completion and see it again after reopening the app.
 - MySQL connection checks and repeatable database setup scripts. See [database setup](database/README.md).
 - Shared API client with configurable address, timeout and readable error handling; Profile can check the real backend `/api/health` endpoint.
 
-Maps, location access, workout logging, progress tools and T's selected feature remain unfinished. Browsing tutorials is public; saving completion requires a valid session. Administrator functionality and roles are not implemented because current features use ordinary user accounts only.
+Live Explore and Hotspots maps, location access, workout logging, progress tools and T's selected feature remain unfinished. Browsing tutorials is public; saving completion requires a valid session. Administrator functionality and roles are not implemented because current features use ordinary user accounts only.
 
 ## Install and run
 
