@@ -8,6 +8,7 @@ import {
   Card,
   Label,
   Button,
+  Field,
   Notice,
 } from "../../components/ui";
 import {
@@ -20,6 +21,8 @@ import { useSession } from "../auth/SessionProvider";
 import {
   metersToMiles,
   routeDistanceMeters,
+  validateRoute,
+  ROUTE_NAME_MAX,
   type LatLng,
 } from "./geometry";
 import { savedOn, type SavedRoute, type SavedRoutes } from "./types";
@@ -32,6 +35,9 @@ export default function RoutesScreen() {
   const [mode, setMode] = useState<RouteMode>("Explore");
   const [detail, setDetail] = useState(false);
   const [points, setPoints] = useState<LatLng[]>([]);
+  const [name, setName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [saved, setSaved] = useState<SavedRoutes>({ status: "loading" });
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
@@ -77,6 +83,28 @@ export default function RoutesScreen() {
       setDeleting(false);
     }
   }
+  async function saveRoute() {
+    setSaving(true);
+    setSaveError("");
+    try {
+      const route = await apiRequest<SavedRoute>("/api/routes", {
+        method: "POST",
+        body: JSON.stringify({ name, points }),
+      });
+      setSaved((list) =>
+        list.status === "ready" ? { status: "ready", routes: [route, ...list.routes] } : list,
+      );
+      setSelectedId(route.routeId);
+      setPoints([]);
+      setName("");
+      setMode("Saved");
+    } catch (e) {
+      setSaveError(message(e, "Could not save the route."));
+    } finally {
+      setSaving(false);
+    }
+  }
+  const draftError = Object.values(validateRoute({ name, points }))[0];
   const selected =
     saved.status === "ready"
       ? (saved.routes.find((r) => r.routeId === selectedId) ?? saved.routes[0])
@@ -132,9 +160,7 @@ export default function RoutesScreen() {
           />
           <View style={{ marginTop: 16 }}>
             <Card>
-              <Label>
-                {metersToMiles(routeDistanceMeters(points)).toFixed(2)} mi
-              </Label>
+              <Label>{miles(routeDistanceMeters(points))}</Label>
               <Label secondary>Tap the map to add points</Label>
               <Button
                 title="Undo last point"
@@ -149,6 +175,31 @@ export default function RoutesScreen() {
                 onPress={() => setPoints([])}
               />
             </Card>
+            {!ready ? null : !user ? (
+              <Card>
+                <Label>Sign in to save this route</Label>
+                <Label secondary>Your drawing stays here while you log in.</Label>
+                <Button title="Log in" onPress={() => router.push("/login")} />
+              </Card>
+            ) : (
+              <Card>
+                <Field
+                  label="Route name"
+                  placeholder="Piedmont loop"
+                  maxLength={ROUTE_NAME_MAX}
+                  value={name}
+                  onChangeText={setName}
+                />
+                {draftError ? <Label secondary>{draftError}</Label> : null}
+                {saveError ? <Notice text={saveError} error /> : null}
+                <Button
+                  title="Save route"
+                  loading={saving}
+                  disabled={!!draftError}
+                  onPress={saveRoute}
+                />
+              </Card>
+            )}
           </View>
         </>
       ) : mode === "Saved" ? (
