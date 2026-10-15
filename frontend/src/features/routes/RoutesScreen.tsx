@@ -307,7 +307,7 @@ export default function RoutesScreen() {
           </View>
         </>
       )}
-      <Notice text="Build uses OpenStreetMap to draw routes. Explore, Hotspots and Saved are still layout previews, and no location permissions are requested." />
+      <Notice text="Build and Saved use OpenStreetMap, and saved routes are kept in your account. Explore and Hotspots are still layout previews, and no location permissions are requested." />
     </Screen>
   );
 }
