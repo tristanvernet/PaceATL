@@ -5,14 +5,13 @@ export type RouteMode = "Explore" | "Hotspots" | "Build" | "Saved";
 export function MapPlaceholder({
   mode,
 }: {
-  mode: Exclude<RouteMode, "Build">;
+  mode: Exclude<RouteMode, "Build" | "Saved">;
 }) {
   const c = useTheme();
   const descriptions = {
     Explore: "Streets, trails and route previews from the chosen map service.",
     Hotspots:
       "Popular running and walking areas, once a data source is selected.",
-    Saved: "A selected saved path, with download status when available.",
   };
   return (
     <View

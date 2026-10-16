@@ -44,7 +44,9 @@ export default function AuthScreen({ mode }: { mode: "login" | "signup" }) {
       });
       await session.signIn(result);
       setValues({ name: "", email: "", password: "", confirmPassword: "" });
-      router.replace("/profile");
+      // Going back keeps the requesting screen's state, such as a drawn route.
+      if (router.canGoBack()) router.back();
+      else router.replace("/profile");
     } catch (e) { setNotice(e instanceof Error ? e.message : "Unable to sign in."); }
     finally { setLoading(false); }
   }
