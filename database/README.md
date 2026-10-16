@@ -22,7 +22,7 @@ npm run db:setup
 npm run db:check
 ```
 
-`db:setup` creates missing tables using `migrations/001-schema.sql`, then checks the existing schema and applies the following compatible changes:
+`db:setup` creates missing tables by applying every `migrations/*.sql` file in filename order, then checks the existing schema and applies the following compatible changes:
 
 - Expand names to 100 characters and emails to 254 to match the signup form.
 - Add `tutorials.video_url` for Iyana's video links.
@@ -51,3 +51,7 @@ Driver reference: [MySQL2 documentation](https://sidorares.github.io/node-mysql2
 ### Reward feature tables
 
 `npm run db:setup` also creates T’s `reward_activity_events` (signed-in user activity totals) and `user_achievements` (one saved award per user and badge). Both reference `users.id`. Existing challenge and workout tables are preserved. The rewards screen’s sample activity control is a test path, separate from the unfinished full workout logger.
+
+### Saved routes
+
+`saved_routes` stores the running routes a signed-in user draws and saves: a name, the drawn points as JSON, and the distance in meters the server computes from those points. Each row references `users.id` and is removed when its user is deleted. The table comes from `migrations/002-saved-routes.sql`, which `npm run db:setup` applies along with every other migration. The file also runs on its own against a database that already has `users`.
