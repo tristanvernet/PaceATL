@@ -35,7 +35,6 @@ app.get("/api/health", (req, res) =>
   res.json({ data: { status: "ok", service: "PaceATL" } }),
 );
 app.use("/api/tutorials", tutorialsRouter);
-app.use("/api/tutorials", tutorialsRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/rewards", rewardsRouter);
 app.use("/api/routes", routesRouter);
