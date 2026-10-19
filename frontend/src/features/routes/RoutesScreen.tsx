@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { apiRequest } from "../../api/client";
+import InfoCard from "../weather/InfoCard";
 import {
   Screen,
   Heading,
@@ -298,10 +299,13 @@ export default function RoutesScreen() {
                 onPress={() => setDetail(!detail)}
               />
               {detail && (
+                <>
                 <Label secondary>
                   This panel will show the selected record. No route or
                   geographic data is loaded.
                 </Label>
+                  <InfoCard />
+                  </>
               )}
             </Card>
           </View>

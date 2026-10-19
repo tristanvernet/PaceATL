@@ -10,9 +10,9 @@ import { rewardsRouter } from "./features/rewards/router.js";
 import { RewardError } from "./features/rewards/service.js";
 import { routesRouter } from "./features/routes/router.js";
 import { RouteError } from "./features/routes/service.js";
+import { weatherRouter } from "./features/weather/router.js";
 export const app = express();
 app.disable("x-powered-by");
-// Only explicitly configured browser previews can read API responses.
 app.use("/api", (req, res, next) => {
   const allowed = (
     process.env.CORS_ORIGINS || "http://localhost:8081,http://127.0.0.1:8081"
@@ -34,15 +34,16 @@ app.use("/api", (req, res, next) => { res.set("Cache-Control", "no-store"); next
 app.get("/api/health", (req, res) =>
   res.json({ data: { status: "ok", service: "PaceATL" } }),
 );
-// Add feature routers above this API not-found handler.
+app.use("/api/tutorials", tutorialsRouter);
 app.use("/api/tutorials", tutorialsRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/rewards", rewardsRouter);
 app.use("/api/routes", routesRouter);
+app.use("/api/weather", weatherRouter);     
 app.use("/api", (req, res) =>
   res
     .status(404)
-    .json({ error: { code: "NOT_FOUND", message: "API endpoint not found." } }),
+    .json({ error: {code: "NOT_FOUND", message: "API endpoint not found."} }),
 );
 const dist = fileURLToPath(new URL("../../frontend/dist/", import.meta.url));
 if (existsSync(dist)) {

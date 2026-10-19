@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
 import { View } from "react-native";
+import InfoCard from "../../features/weather/InfoCard";
 import {
   Screen,
   Heading,
