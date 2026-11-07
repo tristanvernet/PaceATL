@@ -13,7 +13,7 @@ export class ApiError extends Error {
 }
 export async function apiRequest<T>(
   path: string,
-  options: RequestInit = {},
+  { timeoutMs = 10000, ...options }: RequestInit & { timeoutMs?: number } = {},
 ): Promise<T> {
   if (!path.startsWith("/api/"))
     throw new ApiError("Use a path beginning with /api/.", "INVALID_PATH");
@@ -26,7 +26,7 @@ export async function apiRequest<T>(
       "NOT_CONFIGURED",
     );
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const external = options.signal;
   const abort = () => controller.abort();
   if (external?.aborted) controller.abort();

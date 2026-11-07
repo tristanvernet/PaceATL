@@ -1,4 +1,4 @@
--- Latest AI briefing for a saved route. briefing is JSON { summary, terrain, highlights, hazards, tips };
+-- Latest AI briefing for a saved route. briefing is JSON { summary, terrain, highlights, hazards, tips, facts };
 -- the backend regenerates it when generated_at is a few hours old, because weather changes.
 CREATE TABLE IF NOT EXISTS route_briefings (
   route_id INT NOT NULL,
