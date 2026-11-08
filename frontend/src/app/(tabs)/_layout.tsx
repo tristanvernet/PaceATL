@@ -14,6 +14,7 @@ export default function TabLayout() {
         tabBarLabelStyle: { fontSize: 12 },
         sceneStyle: { backgroundColor: c.background },
       }}
+      
     >
       <Tabs.Screen
         name="index"
@@ -51,6 +52,12 @@ export default function TabLayout() {
           ),
         }}
       />
+    {/*I think it makes sence for this page to have a submenu.*/}
+    {/*Also I know this page was made, but i think the ai progress card could go on tuts too!*/}
+      <Tabs.Screen 
+      name="progress" 
+      options={{ href: null }} />
+
     </Tabs>
   );
 }
