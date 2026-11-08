@@ -11,6 +11,7 @@ import { RewardError } from "./features/rewards/service.js";
 import { routesRouter } from "./features/routes/router.js";
 import { RouteError } from "./features/routes/service.js";
 import { weatherRouter } from "./features/weather/router.js";
+import { safetyRouter } from "./features/reports/router.js";
 export const app = express();
 app.disable("x-powered-by");
 app.use("/api", (req, res, next) => {
@@ -40,6 +41,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/rewards", rewardsRouter);
 app.use("/api/routes", routesRouter);
 app.use("/api/weather", weatherRouter);     
+app.use("/api/reports", safetyRouter);     
 app.use("/api", (req, res) =>
   res
     .status(404)
