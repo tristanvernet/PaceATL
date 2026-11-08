@@ -1,6 +1,7 @@
-export async function getWeather() {
-  const weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude=33.749&longitude=-84.388&current=temperature_2m,relative_humidity_2m,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph";
-  const airUrl = "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=33.749&longitude=-84.388&current=us_aqi";
+// Defaults to downtown Atlanta; route briefings pass a route's start point.
+export async function getWeather(latitude = 33.749, longitude = -84.388) {
+  const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph`;
+  const airUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${latitude}&longitude=${longitude}&current=us_aqi`;
 
   const weather = await (await fetch(weatherUrl)).json();
   const air = await (await fetch(airUrl)).json();

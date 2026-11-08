@@ -27,6 +27,7 @@ import {
   type LatLng,
 } from "./geometry";
 import { savedOn, type SavedRoute, type SavedRoutes } from "./types";
+import { RouteBriefing } from "./RouteBriefing";
 
 const miles = (meters: number) => `${metersToMiles(meters).toFixed(2)} mi`;
 const message = (error: unknown, fallback: string) =>
@@ -230,7 +231,10 @@ export default function RoutesScreen() {
             {/* Remounting per route refits the map to the newly selected path. */}
             <RouteMap key={selected.routeId} points={selected.points} />
             {savedError ? <Notice text={savedError} error /> : null}
-            <View style={{ marginTop: 16, gap: 12 }}>
+            <View style={{ marginTop: 16 }}>
+              <RouteBriefing key={selected.routeId} routeId={selected.routeId} />
+            </View>
+            <View style={{ gap: 12 }}>
               {saved.routes.map((route) => (
                 <View
                   key={route.routeId}
@@ -311,7 +315,7 @@ export default function RoutesScreen() {
           </View>
         </>
       )}
-      <Notice text="Build and Saved use OpenStreetMap, and saved routes are kept in your account. Explore and Hotspots are still layout previews, and no location permissions are requested." />
+      <Notice text="Build and Saved use OpenStreetMap, and saved routes are kept in your account with an optional AI briefing. Explore and Hotspots are still layout previews, and no location permissions are requested." />
     </Screen>
   );
 }
