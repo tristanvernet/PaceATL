@@ -33,6 +33,14 @@ const miles = (meters: number) => `${metersToMiles(meters).toFixed(2)} mi`;
 const message = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
 
+export interface ApprovedReport {
+    id: number;
+    title: string;
+    category: string;
+    description: string;
+    created_at: string;
+  }
+
 export default function RoutesScreen() {
   const [mode, setMode] = useState<RouteMode>("Explore");
   const [detail, setDetail] = useState(false);
@@ -52,6 +60,8 @@ export default function RoutesScreen() {
   const router = useRouter();
   const c = useTheme();
   const listUser = mode === "Saved" && ready ? user?.id : undefined;
+  const [reports, setReports] = useState<ApprovedReport[]>([]);
+  const [loadingReports, setLoadingReports] = useState(false);
   useEffect(() => {
     if (listUser === undefined || loadedFor.current === listUser) return;
     const controller = new AbortController();
@@ -116,7 +126,10 @@ export default function RoutesScreen() {
       "A selected route’s distance, activity, weather, approved reports and save/share actions will appear here.",
     Hotspots:
       "A selected area’s name, description and popularity source will appear here.",
+      
   };
+
+
   return (
     <Screen>
       <Heading eyebrow="Explore your pace" title="Find your next route." />
@@ -312,10 +325,45 @@ export default function RoutesScreen() {
                   </>
               )}
             </Card>
+
+              <Card>
+              <Label>Safety Reports</Label>
+
+              {loadingReports ? (
+                <Label secondary>Loading...</Label>
+              ) : reports.length === 0 ? (
+                <Label secondary>No safety hazard reports for this area.</Label>
+              ) : (
+                <View style={{ gap: 8, marginVertical: 8 }}>
+                  {reports.map((rep) => (
+                    <View
+                      key={rep.id}
+                      style={{
+                        padding: 10,
+                        borderRadius: 10,
+                        backgroundColor: c.soft,
+                      }}
+                    >
+                      <Label>{rep.title}</Label>
+                      {rep.description ? (
+                        <Label secondary>{rep.description}</Label>
+                      ) : null}
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              <Button
+                title="Report a Safety Hazard"
+                secondary
+                onPress={() => router.push("/report")}
+              />
+            </Card>
+
           </View>
         </>
       )}
       <Notice text="Build and Saved use OpenStreetMap, and saved routes are kept in your account with an optional AI briefing. Explore and Hotspots are still layout previews, and no location permissions are requested." />
     </Screen>
   );
-}
+};

@@ -58,7 +58,8 @@ export function RouteBriefing({ routeId }: { routeId: number }) {
         await apiRequest<Briefing>(`/api/routes/${routeId}/briefing`, {
           method: "POST",
           signal: controller.current.signal,
-          timeoutMs: 60000,
+           timeoutMs: 60000,
+
         }),
       );
     } catch (e) {
