@@ -1,17 +1,14 @@
-import React, { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { useState } from "react";
 import { Screen, Heading, Card, BackButton, Label, Button } from "../../components/ui";
 import { Coach } from "./CoachMap";
 
 export default function ProgressScreen() {
   const [chatOpen, setChatOpen] = useState(false);
+
+    if (chatOpen) return <Coach onClose={() => setChatOpen(false)} />;
+
   return (
-    <View style={styles.container}>
       <Screen>
-        <Heading 
-          title="Your progress" 
-          subtitle="See your progress and chat with your AI Coach." 
-        />
     <BackButton />
       <Heading
         title="Your progress"
@@ -25,14 +22,5 @@ export default function ProgressScreen() {
           <Button title="Chat with AI Coach" onPress={() => setChatOpen(true)} />
         </Card>
             </Screen>
-
-      <Coach visible={chatOpen} onClose={() => setChatOpen(false)} />
-    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
