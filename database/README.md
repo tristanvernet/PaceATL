@@ -55,3 +55,5 @@ Driver reference: [MySQL2 documentation](https://sidorares.github.io/node-mysql2
 ### Saved routes
 
 `saved_routes` stores the running routes a signed-in user draws and saves: a name, the drawn points as JSON, and the distance in meters the server computes from those points. Each row references `users.id` and is removed when its user is deleted. The table comes from `migrations/002-saved-routes.sql`, which `npm run db:setup` applies along with every other migration. The file also runs on its own against a database that already has `users`.
+
+`route_briefings` caches the latest AI route briefing for each saved route: the briefing as JSON, the model that wrote it and when. Its primary key is the `saved_routes.route_id` it describes, so each route has at most one briefing and deleting the route deletes it. Ownership is checked through `saved_routes`, so the table has no user column. The backend regenerates a briefing once it is a few hours old because weather changes. The table comes from `migrations/003-route-briefings.sql`.

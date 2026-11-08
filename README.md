@@ -8,6 +8,7 @@ Installable iPhone/Android app foundation built with React Native, Expo and Expo
 - Shared colors, spacing, screen layout, buttons, fields, notices and loading states with light/dark appearance.
 - Database-backed signup, login, logout and seven-day sessions. Passwords use salted scrypt hashes; session tokens are hashed in MySQL.
 - Routes: draw a route on an OpenStreetMap map in Build, then name and save it to your account. Saved lists your routes with distance and date, shows the selected one on the map, and deletes with a confirmation. Explore and Hotspots are still labeled map placeholders.
+- AI route briefings: on a saved route, Get briefing summarizes terrain (Open-Meteo elevation), nearby parks and landmarks (OpenStreetMap), weather and air quality, and reported hazards using Gemini. Set `AI_BASE_URL`, `AI_API_KEY` and `AI_MODEL` in `backend/.env` with your own free key from aistudio.google.com. Other AI features can reuse `chat()` from `backend/src/ai/client.js`.
 - Database-backed tutorial library, instructions, tips and videos using Iyana's content. Signed-in users can save completion and see it again after reopening the app.
 - MySQL connection checks and repeatable database setup scripts. See [database setup](database/README.md).
 - Shared API client with configurable address, timeout and readable error handling; Profile can check the real backend `/api/health` endpoint.

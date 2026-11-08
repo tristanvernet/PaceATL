@@ -11,6 +11,9 @@ import { RewardError } from "./features/rewards/service.js";
 import { routesRouter } from "./features/routes/router.js";
 import { RouteError } from "./features/routes/service.js";
 import { weatherRouter } from "./features/weather/router.js";
+import { safetyRouter } from "./features/reports/router.js";
+import { briefingsRouter } from "./features/briefings/router.js";
+import { AiError } from "./ai/client.js";
 export const app = express();
 app.disable("x-powered-by");
 app.use("/api", (req, res, next) => {
@@ -35,11 +38,12 @@ app.get("/api/health", (req, res) =>
   res.json({ data: { status: "ok", service: "PaceATL" } }),
 );
 app.use("/api/tutorials", tutorialsRouter);
-app.use("/api/tutorials", tutorialsRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/rewards", rewardsRouter);
 app.use("/api/routes", routesRouter);
+app.use("/api/routes", briefingsRouter);
 app.use("/api/weather", weatherRouter);     
+app.use("/api/reports", safetyRouter);     
 app.use("/api", (req, res) =>
   res
     .status(404)
@@ -60,7 +64,7 @@ app.use((req, res) =>
 );
 app.use((error, req, res, next) => {
   if (res.headersSent) return next(error);
-  if (error instanceof AuthError || error instanceof TutorialError || error instanceof RewardError || error instanceof RouteError)
+  if (error instanceof AuthError || error instanceof TutorialError || error instanceof RewardError || error instanceof RouteError || error instanceof AiError)
     return res.status(error.status).json({ error: { code: error.code, message: error.message } });
   const status = error.status >= 400 && error.status < 600 ? error.status : 500;
   res.status(status).json({
