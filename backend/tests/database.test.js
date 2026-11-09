@@ -27,6 +27,8 @@ function fixture({ upgraded = false, failIndex = false } = {}) {
     { tableName: "users", columnName: "email", maxLength: upgraded ? 254 : 50 },
     { tableName: "completed_tutorials", columnName: "completion_id", extra: upgraded ? "auto_increment" : "" },
     ...(upgraded ? [
+      { tableName: "users", columnName: "role" },
+      { tableName: "users", columnName: "status" },
       { tableName: "tutorials", columnName: "video_url" },
       { tableName: "completed_tutorials", columnName: "user_id" },
       ...["activity_type", "distance_miles", "duration_minutes", "created_at"].map((columnName) => ({ tableName: "workouts", columnName })),

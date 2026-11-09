@@ -1,5 +1,5 @@
 import express from "express";
-import { fitnessRouter } from "./features/fitness/router.js";
+import { fitnessRouter, FitnessError } from "./features/fitness/router.js";
 import { fileURLToPath } from "node:url";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -76,7 +76,7 @@ app.use((req, res) =>
 );
 app.use((error, req, res, next) => {
   if (res.headersSent) return next(error);
-  if (error instanceof AuthError || error instanceof TutorialError || error instanceof RewardError || error instanceof RouteError || error instanceof WorkoutError || error instanceof ReportError || error instanceof AiError || error instanceof ChatbotError)
+  if (error instanceof AuthError || error instanceof TutorialError || error instanceof RewardError || error instanceof RouteError || error instanceof WorkoutError || error instanceof ReportError || error instanceof AiError || error instanceof ChatbotError || error instanceof FitnessError)
     return res.status(error.status).json({ error: { code: error.code, message: error.message } });
   const status = error.status >= 400 && error.status < 600 ? error.status : 500;
   res.status(status).json({

@@ -1,12 +1,18 @@
 import { Router } from "express";
 import { getDatabase } from "../../database.js";
-import { sessionUser, AuthError } from "../auth/service.js";
+import { sessionUser } from "../auth/service.js";
+
+export class FitnessError extends Error {
+  constructor(code, message, status = 400) {
+    super(message); this.code = code; this.status = status;
+  }
+}
 
 export const fitnessRouter = Router();
 
 export function validateShare(body = {}) {
   if (!body || typeof body !== "object" || Array.isArray(body)) {
-    throw new AuthError(
+    throw new FitnessError(
       "INVALID_INPUT",
       "Enter valid sharing information."
     );
@@ -16,14 +22,14 @@ export function validateShare(body = {}) {
   const title = typeof body.title === "string" ? body.title.trim() : "";
 
   if (!title || title.length > 120) {
-    throw new AuthError(
+    throw new FitnessError(
       "INVALID_INPUT",
       "Enter a title of 1–120 characters."
     );
   }
 
   if (!["route", "workout", "goal"].includes(kind)) {
-    throw new AuthError(
+    throw new FitnessError(
       "INVALID_INPUT",
       "Choose route, workout, or goal."
     );
@@ -37,7 +43,7 @@ export function validateShare(body = {}) {
       target > 99999999.99 ||
       Math.round(target * 100) / 100 !== target
     ) {
-      throw new AuthError(
+      throw new FitnessError(
         "INVALID_INPUT",
         "Enter a positive target with up to two decimal places."
       );
@@ -47,13 +53,13 @@ export function validateShare(body = {}) {
       !["miles", "minutes", "workouts"].includes(unit) ||
       (unit === "workouts" && !Number.isInteger(target))
     ) {
-      throw new AuthError(
+      throw new FitnessError(
         "INVALID_INPUT",
         "Choose miles, minutes, or a whole number of workouts."
       );
     }
   } else if (!Number.isSafeInteger(sourceId) || sourceId < 1) {
-    throw new AuthError(
+    throw new FitnessError(
       "INVALID_INPUT",
       "Select one of your saved items."
     );
@@ -67,7 +73,7 @@ fitnessRouter.get("/dashboard", async (req, res) => {
   const period = req.query.period || "7";
 
   if (!["7", "30", "all"].includes(period)) {
-    throw new AuthError(
+    throw new FitnessError(
       "INVALID_INPUT",
       "Choose 7 days, 30 days, or all time."
     );
@@ -164,7 +170,12 @@ fitnessRouter.get("/sources", async (req, res) => {
     [user.id]
   );
 
-  res.json({ data: { routes, workouts } });
+  res.json({
+    data: {
+      routes,
+      workouts: workouts.map(w => ({ ...w, distanceMiles: Number(w.distanceMiles) })),
+    },
+  });
 });
 
 fitnessRouter.get("/shares", async (req, res) => {
@@ -181,7 +192,6 @@ fitnessRouter.get("/shares", async (req, res) => {
       u.name AS author,
       r.name AS routeName,
       r.distance_meters AS distanceMeters,
-      r.points AS routePoints,
       w.activity_type AS activityType,
       w.distance_miles AS distanceMiles,
       w.duration_minutes AS durationMinutes
@@ -204,6 +214,9 @@ fitnessRouter.get("/shares", async (req, res) => {
   res.json({
     data: rows.map(({ ownerId, ...row }) => ({
       ...row,
+      // mysql2 returns DECIMAL columns as strings.
+      target: row.target == null ? null : Number(row.target),
+      distanceMiles: row.distanceMiles == null ? null : Number(row.distanceMiles),
       isOwner: Number(ownerId) === Number(user.id),
     })),
   });
@@ -225,7 +238,7 @@ fitnessRouter.post("/shares", async (req, res) => {
     const [rows] = await db.execute(sql, [sourceId, user.id]);
 
     if (!rows.length) {
-      throw new AuthError(
+      throw new FitnessError(
         "NOT_FOUND",
         "Saved item not found.",
         404
@@ -258,7 +271,7 @@ fitnessRouter.delete("/shares/:id", async (req, res) => {
     !/^[1-9][0-9]*$/.test(req.params.id) ||
     !Number.isSafeInteger(Number(req.params.id))
   ) {
-    throw new AuthError("INVALID_INPUT", "Invalid share.");
+    throw new FitnessError("INVALID_INPUT", "Invalid share.");
   }
 
   const [result] = await getDatabase().execute(
@@ -267,7 +280,7 @@ fitnessRouter.delete("/shares/:id", async (req, res) => {
   );
 
   if (!result.affectedRows) {
-    throw new AuthError("NOT_FOUND", "Share not found.", 404);
+    throw new FitnessError("NOT_FOUND", "Share not found.", 404);
   }
 
   res.json({ data: { removed: true } });

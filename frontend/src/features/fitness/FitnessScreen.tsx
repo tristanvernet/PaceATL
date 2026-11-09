@@ -37,7 +37,6 @@ type Post = {
   unit?: string;
   routeName?: string;
   distanceMeters?: number;
-  routePoints?: unknown;
   activityType?: string;
   distanceMiles?: number;
   durationMinutes?: number;
@@ -269,7 +268,7 @@ export default function FitnessScreen() {
 
       <Heading
         title="Social sharing"
-        subtitle="Published items are visible to other signed-in users. Shared routes include saved coordinates."
+        subtitle="Published items are visible to other signed-in users."
       />
 
       <Card>
@@ -365,18 +364,10 @@ export default function FitnessScreen() {
           {post.kind === "goal" ? (
             <Label>{post.target} {post.unit}</Label>
           ) : post.kind === "route" ? (
-            <>
-              <Label>
-                {post.routeName} ·{" "}
-                {((post.distanceMeters || 0) / 1609.344).toFixed(2)} mi
-              </Label>
-              <Label secondary>
-                Route coordinates:{" "}
-                {typeof post.routePoints === "string"
-                  ? post.routePoints
-                  : JSON.stringify(post.routePoints)}
-              </Label>
-            </>
+            <Label>
+              {post.routeName} ·{" "}
+              {((post.distanceMeters || 0) / 1609.344).toFixed(2)} mi
+            </Label>
           ) : (
             <Label>
               {post.activityType} · {post.distanceMiles} mi ·{" "}
