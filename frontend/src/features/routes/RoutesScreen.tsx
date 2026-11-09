@@ -95,6 +95,13 @@ export default function RoutesScreen() {
       setDeleting(false);
     }
   }
+  useEffect(() => {
+    setLoadingReports(true);
+    apiRequest<{ data: ApprovedReport[] }>("/api/reports/approved").
+    then((res) =>  {
+      const reportList = Array.isArray(res) ? res : res?.data ?? [];
+      setReports(reportList);}).catch((err) => console.error(err)).finally(() => setLoadingReports(false));}, []);
+
   async function saveRoute() {
     setSaving(true);
     setSaveError("");
@@ -128,8 +135,6 @@ export default function RoutesScreen() {
       "A selected area’s name, description and popularity source will appear here.",
       
   };
-
-
   return (
     <Screen>
       <Heading eyebrow="Explore your pace" title="Find your next route." />

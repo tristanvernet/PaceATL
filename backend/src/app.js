@@ -17,6 +17,9 @@ import { safetyRouter } from "./features/reports/router.js";
 import { ReportError } from "./features/reports/service.js";
 import { briefingsRouter } from "./features/briefings/router.js";
 import { AiError } from "./ai/client.js";
+import { chatbotRouter } from "./features/chatbot/router.js";
+import { ChatbotError } from "./features/chatbot/service.js";
+import { adminRouter } from "./features/admin/router.js";
 export const app = express();
 app.disable("x-powered-by");
 app.use("/api", (req, res, next) => {
@@ -40,6 +43,7 @@ app.use("/api", (req, res, next) => { res.set("Cache-Control", "no-store"); next
 app.get("/api/health", (req, res) =>
   res.json({ data: { status: "ok", service: "PaceATL" } }),
 );
+
 app.use("/api/tutorials", tutorialsRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/rewards", rewardsRouter);
@@ -47,7 +51,10 @@ app.use("/api/routes", routesRouter);
 app.use("/api/routes", briefingsRouter);
 app.use("/api/workouts", workoutsRouter);
 app.use("/api/weather", weatherRouter);     
-app.use("/api/reports", safetyRouter);     
+app.use("/api/reports", safetyRouter);   
+app.use("/api/chatbot", chatbotRouter);  
+app.use("/api/admin", adminRouter);
+
 app.use("/api", (req, res) =>
   res
     .status(404)
@@ -67,8 +74,9 @@ app.use((req, res) =>
     .json({ error: { code: "NOT_FOUND", message: "Page not found." } }),
 );
 app.use((error, req, res, next) => {
+    console.error(error);   // <-- add this
   if (res.headersSent) return next(error);
-  if (error instanceof AuthError || error instanceof TutorialError || error instanceof RewardError || error instanceof RouteError || error instanceof WorkoutError || error instanceof ReportError || error instanceof AiError)
+  if (error instanceof AuthError || error instanceof TutorialError || error instanceof RewardError || error instanceof RouteError || error instanceof WorkoutError || error instanceof ReportError || error instanceof AiError || error instanceof ChatbotError)
     return res.status(error.status).json({ error: { code: error.code, message: error.message } });
   const status = error.status >= 400 && error.status < 600 ? error.status : 500;
   res.status(status).json({

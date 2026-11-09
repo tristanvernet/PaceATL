@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type PropsWithChildren 
 import { apiRequest, ApiError } from "../../api/client";
 import { restoreSessionToken, saveSessionToken } from "./session-storage";
 
-export type User = { id: number; name: string; email: string };
+export type User = { id: number; name: string; email: string; role: string };
 export type SignInResult = { user: User; token: string };
 const Context = createContext<{
   user: User | null; ready: boolean; error: string;
@@ -31,6 +31,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
   async function signIn(result: SignInResult) {
     await saveSessionToken(result.token);
     setUser(result.user); setError("");
+    await refresh();
   }
   async function signOut() {
     // Keep the session available for retry if server-side revocation fails.
