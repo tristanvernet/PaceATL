@@ -14,12 +14,25 @@ export async function upgradeSchema(database) {
     await database.query("ALTER TABLE completed_tutorials ADD COLUMN user_id INT NULL");
   if (!column("completed_tutorials", "completion_id")?.extra?.includes("auto_increment"))
     await database.query("ALTER TABLE completed_tutorials MODIFY COLUMN completion_id INT NOT NULL AUTO_INCREMENT");
+  // Workout logging fills in the fields of the Workout class.
+  if (!column("workouts", "activity_type"))
+    await database.query("ALTER TABLE workouts ADD COLUMN activity_type VARCHAR(10) NOT NULL DEFAULT 'other'");
+  if (!column("workouts", "distance_miles"))
+    await database.query("ALTER TABLE workouts ADD COLUMN distance_miles DECIMAL(7,2) NOT NULL DEFAULT 0");
+  if (!column("workouts", "duration_minutes"))
+    await database.query("ALTER TABLE workouts ADD COLUMN duration_minutes INT NOT NULL DEFAULT 0");
+  if (!column("workouts", "created_at"))
+    await database.query("ALTER TABLE workouts ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP");
+  if (!column("reward_activity_events", "workout_id"))
+    await database.query("ALTER TABLE reward_activity_events ADD COLUMN workout_id INT NULL");
 
   const [foreignKeys] = await database.execute(
     "SELECT TABLE_NAME AS tableName, COLUMN_NAME AS columnName FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = DATABASE() AND REFERENCED_TABLE_NAME IS NOT NULL",
   );
   if (!foreignKeys.some((key) => key.tableName === "completed_tutorials" && key.columnName === "user_id"))
     await database.query("ALTER TABLE completed_tutorials ADD CONSTRAINT fk_completed_tutorial_user FOREIGN KEY (user_id) REFERENCES users(id)");
+  if (!foreignKeys.some((key) => key.tableName === "reward_activity_events" && key.columnName === "workout_id"))
+    await database.query("ALTER TABLE reward_activity_events ADD CONSTRAINT fk_reward_activity_workout FOREIGN KEY (workout_id) REFERENCES workouts(workout_id) ON DELETE CASCADE");
 
   const [indexes] = await database.execute(
     "SELECT INDEX_NAME AS name, COLUMN_NAME AS columnName, NON_UNIQUE AS nonUnique, SEQ_IN_INDEX AS position FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tutorial_steps'",

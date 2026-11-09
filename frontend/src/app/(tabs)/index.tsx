@@ -38,7 +38,7 @@ export default function HomeScreen() {
           onPress={() => router.push("/progress")}
         />
       </View>
-      <Notice text="Browse tutorials freely. Sign in to save completion. Maps, workout logging and progress tools are still in development." />
+      <Notice text="Browse tutorials freely. Sign in to save completions, log workouts and earn achievements." />
     </Screen>
   );
 }

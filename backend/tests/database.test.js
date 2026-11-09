@@ -29,6 +29,8 @@ function fixture({ upgraded = false, failIndex = false } = {}) {
     ...(upgraded ? [
       { tableName: "tutorials", columnName: "video_url" },
       { tableName: "completed_tutorials", columnName: "user_id" },
+      ...["activity_type", "distance_miles", "duration_minutes", "created_at"].map((columnName) => ({ tableName: "workouts", columnName })),
+      { tableName: "reward_activity_events", columnName: "workout_id" },
     ] : []),
   ];
   const indexes = upgraded ? [
@@ -39,7 +41,10 @@ function fixture({ upgraded = false, failIndex = false } = {}) {
     statements,
     execute: async (sql) => {
       if (sql.includes("information_schema.COLUMNS")) return [columns];
-      if (sql.includes("KEY_COLUMN_USAGE")) return [upgraded ? [{ tableName: "completed_tutorials", columnName: "user_id" }] : []];
+      if (sql.includes("KEY_COLUMN_USAGE")) return [upgraded ? [
+        { tableName: "completed_tutorials", columnName: "user_id" },
+        { tableName: "reward_activity_events", columnName: "workout_id" },
+      ] : []];
       if (sql.includes("STATISTICS")) return [indexes];
       throw new Error("Unexpected metadata query");
     },
