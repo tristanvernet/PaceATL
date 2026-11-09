@@ -12,6 +12,7 @@ import { routesRouter } from "./features/routes/router.js";
 import { RouteError } from "./features/routes/service.js";
 import { weatherRouter } from "./features/weather/router.js";
 import { safetyRouter } from "./features/reports/router.js";
+import { ReportError } from "./features/reports/service.js";
 import { briefingsRouter } from "./features/briefings/router.js";
 import { AiError } from "./ai/client.js";
 export const app = express();
@@ -64,7 +65,7 @@ app.use((req, res) =>
 );
 app.use((error, req, res, next) => {
   if (res.headersSent) return next(error);
-  if (error instanceof AuthError || error instanceof TutorialError || error instanceof RewardError || error instanceof RouteError || error instanceof AiError)
+  if (error instanceof AuthError || error instanceof TutorialError || error instanceof RewardError || error instanceof RouteError || error instanceof ReportError || error instanceof AiError)
     return res.status(error.status).json({ error: { code: error.code, message: error.message } });
   const status = error.status >= 400 && error.status < 600 ? error.status : 500;
   res.status(status).json({
