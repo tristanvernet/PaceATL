@@ -33,6 +33,11 @@ export default function HomeScreen() {
           onPress={() => router.push("/workouts")}
         />
         <Button
+          title="Fitness dashboard & sharing"
+          secondary
+          onPress={() => router.push("/fitness")}
+        />
+        <Button
           title="Progress & AI coach"
           secondary
           onPress={() => router.push("/progress")}

@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS fitness_shares (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  kind VARCHAR(10) NOT NULL,
+  title VARCHAR(120) NOT NULL,
+  route_id INT DEFAULT NULL,
+  workout_id INT DEFAULT NULL,
+  target DECIMAL(10,2) DEFAULT NULL,
+  unit VARCHAR(10) DEFAULT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (user_id)
+    REFERENCES users(id) ON DELETE CASCADE,
+
+  FOREIGN KEY (route_id)
+    REFERENCES saved_routes(route_id) ON DELETE CASCADE,
+
+  FOREIGN KEY (workout_id)
+    REFERENCES workouts(workout_id) ON DELETE CASCADE
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
