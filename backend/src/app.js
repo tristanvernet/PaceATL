@@ -74,7 +74,6 @@ app.use((req, res) =>
     .json({ error: { code: "NOT_FOUND", message: "Page not found." } }),
 );
 app.use((error, req, res, next) => {
-    console.error(error);   // <-- add this
   if (res.headersSent) return next(error);
   if (error instanceof AuthError || error instanceof TutorialError || error instanceof RewardError || error instanceof RouteError || error instanceof WorkoutError || error instanceof ReportError || error instanceof AiError || error instanceof ChatbotError)
     return res.status(error.status).json({ error: { code: error.code, message: error.message } });
