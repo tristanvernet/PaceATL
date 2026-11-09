@@ -8,13 +8,17 @@ export async function upgradeSchema(database) {
     await database.query("ALTER TABLE users MODIFY COLUMN name VARCHAR(100)");
   if (Number(column("users", "email")?.maxLength) < 254)
     await database.query("ALTER TABLE users MODIFY COLUMN email VARCHAR(254)");
+  if (!column("users", "role"))
+    await database.query("ALTER TABLE users ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'user'");
+  if (!column("users", "status"))
+  await database.query("ALTER TABLE users ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'active'");
   if (!column("tutorials", "video_url"))
     await database.query("ALTER TABLE tutorials ADD COLUMN video_url VARCHAR(2048)");
   if (!column("completed_tutorials", "user_id"))
     await database.query("ALTER TABLE completed_tutorials ADD COLUMN user_id INT NULL");
   if (!column("completed_tutorials", "completion_id")?.extra?.includes("auto_increment"))
     await database.query("ALTER TABLE completed_tutorials MODIFY COLUMN completion_id INT NOT NULL AUTO_INCREMENT");
-  // Workout logging fills in the fields of the Workout class.
+    // Workout logging fills in the fields of the Workout class.
   if (!column("workouts", "activity_type"))
     await database.query("ALTER TABLE workouts ADD COLUMN activity_type VARCHAR(10) NOT NULL DEFAULT 'other'");
   if (!column("workouts", "distance_miles"))
@@ -25,7 +29,6 @@ export async function upgradeSchema(database) {
     await database.query("ALTER TABLE workouts ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP");
   if (!column("reward_activity_events", "workout_id"))
     await database.query("ALTER TABLE reward_activity_events ADD COLUMN workout_id INT NULL");
-
   const [foreignKeys] = await database.execute(
     "SELECT TABLE_NAME AS tableName, COLUMN_NAME AS columnName FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = DATABASE() AND REFERENCED_TABLE_NAME IS NOT NULL",
   );
@@ -33,7 +36,6 @@ export async function upgradeSchema(database) {
     await database.query("ALTER TABLE completed_tutorials ADD CONSTRAINT fk_completed_tutorial_user FOREIGN KEY (user_id) REFERENCES users(id)");
   if (!foreignKeys.some((key) => key.tableName === "reward_activity_events" && key.columnName === "workout_id"))
     await database.query("ALTER TABLE reward_activity_events ADD CONSTRAINT fk_reward_activity_workout FOREIGN KEY (workout_id) REFERENCES workouts(workout_id) ON DELETE CASCADE");
-
   const [indexes] = await database.execute(
     "SELECT INDEX_NAME AS name, COLUMN_NAME AS columnName, NON_UNIQUE AS nonUnique, SEQ_IN_INDEX AS position FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tutorial_steps'",
   );

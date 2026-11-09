@@ -61,6 +61,9 @@ export default function ProfileScreen() {
         {session.user ? <>
           <Label secondary>{session.user.email}</Label>
           <Button title="Log out" loading={signingOut} onPress={logout} />
+        {session.user?.role === "admin" && (
+          <Button title="Admin portal" onPress={() => router.push("/admin")} 
+          />)}
         </> : <View style={{ gap: 12 }}>
           <Button title="Log in" disabled={!session.ready} onPress={() => router.push("/login")} />
           <Button

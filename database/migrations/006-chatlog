@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS chat_logs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  sender ENUM('user', 'bot') NOT NULL,
+  text TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

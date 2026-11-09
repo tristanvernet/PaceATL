@@ -5,7 +5,6 @@ export class AiError extends Error {
     super(message); this.code = code; this.status = status;
   }
 }
-
 // messages: [{ role: "system" | "user" | "assistant", content }]. With json, the parsed object is returned.
 export async function chat(messages, { json = false, timeoutMs = 30000 } = {}) {
   const { AI_BASE_URL, AI_API_KEY, AI_MODEL } = process.env;
@@ -20,10 +19,11 @@ export async function chat(messages, { json = false, timeoutMs = 30000 } = {}) {
       signal: AbortSignal.timeout(timeoutMs),
     });
   } catch {
-    throw new AiError("AI_UNAVAILABLE", "The AI service could not be reached. Try again shortly.");
-  }
+    throw new AiError("AI_UNAVAILABLE", "The AI service could not be reached. Try again shortly.");}
   if (response.status === 429) throw new AiError("AI_RATE_LIMITED", "Too many AI requests. Try again in a minute.", 429);
-  if (!response.ok) throw new AiError("AI_UNAVAILABLE", "The AI service is unavailable. Try again shortly.");
+  if (!response.ok) {
+    console.error("AI error:", response.status, await response.text());
+    throw new AiError("AI_UNAVAILABLE", "The AI service is unavailable. Try again shortly.");}
   const content = (await response.json()).choices?.[0]?.message?.content;
   if (typeof content !== "string") throw new AiError("AI_BAD_RESPONSE", "The AI service returned no answer.");
   if (!json) return content;
@@ -31,6 +31,5 @@ export async function chat(messages, { json = false, timeoutMs = 30000 } = {}) {
     // Some models wrap JSON in a ```json fence despite response_format.
     return JSON.parse(content.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, ""));
   } catch {
-    throw new AiError("AI_BAD_RESPONSE", "The AI service returned an unreadable answer.");
+    throw new AiError("AI_BAD_RESPONSE", "The AI service returned an unreadable answer.");}
   }
-}

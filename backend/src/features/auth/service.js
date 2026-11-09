@@ -30,7 +30,7 @@ export async function verifyPassword(password, hash) {
   return valid && timingSafeEqual(key, Buffer.from(parts[5], "hex"));
 }
 export const tokenHash = (token) => createHash("sha256").update(token).digest("hex");
-export const publicUser = (user) => ({ id: user.id, name: user.name, email: user.email });
+export const publicUser = (user) => ({ id: user.id, name: user.name, email: user.email, role: user.role ?? "user"});
 
 export async function createSession(database, userId) {
   const token = randomBytes(32).toString("hex");
@@ -46,9 +46,10 @@ export async function sessionUser(req, required = true) {
   const match = /^Bearer ([a-f0-9]{64})$/.exec(header || "");
   if (!match) throw new AuthError("UNAUTHORIZED", "Sign in to continue.", 401);
   const [rows] = await getDatabase().execute(
-    "SELECT u.id, u.name, u.email FROM user_sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires_at > UTC_TIMESTAMP()",
+    "SELECT u.id, u.name, u.email, u.role, u.status FROM user_sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires_at > UTC_TIMESTAMP()",
     [tokenHash(match[1])]);
   if (!rows.length) throw new AuthError("UNAUTHORIZED", "Your session has ended. Please sign in again.", 401);
+  if (rows[0].status === "restricted") throw new AuthError("RESTRICTED", "This account has been restricted.", 403);
   req.sessionTokenHash = tokenHash(match[1]);
   req.user = publicUser(rows[0]);
   return req.user;
