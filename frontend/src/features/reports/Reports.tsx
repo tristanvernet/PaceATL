@@ -30,9 +30,10 @@ export function SafetyReport({
   const handleSubmit = async () => {
     if (submitting) return;
     setSubmitting(true);
+    setError("");
 
     try {
-      await apiRequest("/api/safety/report", {
+      await apiRequest("/api/reports/report", {
         method: "POST",
         body: JSON.stringify({
           title: `Safety Concern: ${category}`,
@@ -51,7 +52,7 @@ export function SafetyReport({
         onClose();
       }, 1500);
     } catch (err) {
-      alert("Failed. Please try again.");
+      setError(err instanceof Error ? err.message : "Could not submit the report. Please try again.");
     } finally {
       setSubmitting(false);
     }
