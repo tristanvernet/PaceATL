@@ -1,4 +1,5 @@
 import express from "express";
+import { fitnessRouter } from "./features/fitness/router.js";
 import { fileURLToPath } from "node:url";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -43,7 +44,7 @@ app.use("/api", (req, res, next) => { res.set("Cache-Control", "no-store"); next
 app.get("/api/health", (req, res) =>
   res.json({ data: { status: "ok", service: "PaceATL" } }),
 );
-
+app.use("/api/fitness", fitnessRouter);
 app.use("/api/tutorials", tutorialsRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/rewards", rewardsRouter);
