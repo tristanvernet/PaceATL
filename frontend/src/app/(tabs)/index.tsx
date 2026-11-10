@@ -18,9 +18,11 @@ export default function HomeScreen() {
       />
       <View style={{ gap: 12 }}>
         <Button
-          title="Explore routes & hotspots"
+          title="Explore routes"
           onPress={() => router.push("/routes")}
         />
+        <Button title="Hotspot map" secondary onPress={() => router.push("/hotspots")} />
+        <Button title="Today’s challenge" secondary onPress={() => router.push("/daily-challenge")} />
         <Button
           title="Workout tips & tutorials"
           secondary
