@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import type { LatLng } from "../features/routes/geometry";
-import { light } from "../theme";
+import { THEMES } from "../theme";
+
+const light = THEMES.clay.light;
 
 export type RouteMapProps = {
   points: LatLng[];
