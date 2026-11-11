@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View, type TextInputProps } from "react-native";
+import { Platform, Pressable, ScrollView, Text, TextInput, View, type TextInputProps, type TextStyle } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { apiRequest } from "../../api/client";
@@ -152,17 +152,23 @@ export function LogSheet() {
   );
 }
 
+// The focus underline replaces the browser outline, which RN types do not expose.
+const noWebOutline = (Platform.OS === "web" ? { outlineStyle: "none" } : null) as TextStyle | null;
+
 function BigNumber({ label, unit, error, ...props }: TextInputProps & { label: string; unit: string; error?: string }) {
   const c = useTheme();
+  const [focused, setFocused] = useState(false);
   return (
-    <View style={{ borderBottomWidth: 1, borderBottomColor: error ? c.error : c.border, paddingTop: 12, paddingBottom: 10, marginBottom: 14 }}>
+    <View style={{ borderBottomWidth: focused ? 2 : 1, borderBottomColor: error ? c.error : focused ? c.primary : c.border, paddingTop: 12, paddingBottom: 10, marginBottom: 14 }}>
       <Text style={{ color: c.muted, fontSize: 11, fontWeight: "700", letterSpacing: 1 }}>{label.toUpperCase()}</Text>
       <View style={{ flexDirection: "row", alignItems: "baseline", marginTop: 4 }}>
         <TextInput
           accessibilityLabel={`${label} in ${unit}`}
           placeholderTextColor={c.muted}
           {...props}
-          style={{ flex: 1, minWidth: 0, color: c.text, fontSize: 34, fontWeight: "700", letterSpacing: -1.5, fontVariant: ["tabular-nums"], paddingVertical: 0 }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          style={[noWebOutline, { flex: 1, minWidth: 0, color: c.text, fontSize: 34, fontWeight: "700", letterSpacing: -1.5, fontVariant: ["tabular-nums"], paddingVertical: 0 }]}
         />
         <Text style={{ color: c.muted, fontSize: 15, fontWeight: "600", marginLeft: 6 }}>{unit}</Text>
       </View>

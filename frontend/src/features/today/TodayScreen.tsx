@@ -151,7 +151,7 @@ function ChallengeCard({ c, load }: { c: Palette; load: Load<TodayChallenge> }) 
     );
   const { challenge, progress, completed } = load.data;
   const unit = METRICS[challenge.metric];
-  const fraction = Math.min(1, challenge.target ? progress / challenge.target : 1);
+  const fraction = completed ? 1 : Math.min(1, challenge.target ? progress / challenge.target : 1);
   const activity = isActivityType(challenge.activityType) ? challenge.activityType : null;
   return (
     <Hero
