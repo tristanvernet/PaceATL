@@ -43,7 +43,8 @@ export default function AuthScreen({ mode }: { mode: Mode }) {
   const [notice, setNotice] = useState("");
   function change(key: keyof typeof values, value: string) {
     setValues((current) => ({ ...current, [key]: value }));
-    setErrors((current) => ({ ...current, [key]: "" }));
+    // Drop the key rather than store "": Field renders an empty error string as a stray text node.
+    setErrors(({ [key]: _, ...rest }) => rest);
     setNotice("");
   }
   async function submit() {
