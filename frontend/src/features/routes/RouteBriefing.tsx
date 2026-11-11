@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { apiRequest, errorMessage } from "../../api/client";
+import { apiRequest } from "../../api/client";
 import { Button } from "../../components/ui";
 import { useTheme } from "../../theme";
 import type { Hazard } from "./types";
-import type { Load } from "../../api/useResource";
+import { useResource } from "../../api/useResource";
 
 type Briefing = {
   routeId: number;
@@ -76,29 +75,12 @@ function Section({
  */
 export function RouteBriefing({ routeId, hazards }: { routeId: number; hazards: Hazard[] }) {
   const c = useTheme();
-  const [state, setState] = useState<Load<Briefing>>({ status: "loading" });
-  const [attempt, setAttempt] = useState(0);
-  useEffect(() => {
-    const controller = new AbortController();
-    setState({ status: "loading" });
+  const { state, reload } = useResource(
+    `briefing:${routeId}`,
     // Gathering map data and writing the briefing can take up to a minute.
-    apiRequest<Briefing>(`/api/routes/${routeId}/briefing`, {
-      method: "POST",
-      signal: controller.signal,
-      timeoutMs: 60000,
-    })
-      .then((value) => {
-        if (!controller.signal.aborted) setState({ status: "ready", data: value });
-      })
-      .catch((error) => {
-        if (!controller.signal.aborted)
-          setState({
-            status: "error",
-            message: errorMessage(error, "Could not prepare the briefing."),
-          });
-      });
-    return () => controller.abort();
-  }, [routeId, attempt]);
+    () => apiRequest<Briefing>(`/api/routes/${routeId}/briefing`, { method: "POST", timeoutMs: 60000 }),
+    { staleMs: 10 * 60_000 },
+  );
 
   const hazardLines = hazards.length
     ? hazards.map((h) => (h.description ? `${h.title}. ${h.description}` : h.title))
@@ -125,7 +107,7 @@ export function RouteBriefing({ routeId, hazards }: { routeId: number; hazards: 
       ) : state.status === "error" ? (
         <View style={{ gap: 8, marginTop: 8 }}>
           <Text style={{ color: c.error, fontSize: 13 }}>{state.message}</Text>
-          <Button title="Try again" secondary onPress={() => setAttempt((n) => n + 1)} />
+          <Button title="Try again" secondary onPress={reload} />
         </View>
       ) : (
         <>
