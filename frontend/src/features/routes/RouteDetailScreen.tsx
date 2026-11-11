@@ -8,7 +8,7 @@ import { EMPTY_SCENE } from "../../components/routeMapBridge";
 import { Button, Notice } from "../../components/ui";
 import { fonts, useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
-import { RoundButton, Stats } from "./controls";
+import { RoundButton, Stats, passThrough } from "./controls";
 import { metersToMiles } from "./geometry";
 import { RouteBriefing } from "./RouteBriefing";
 import { useLoad } from "./useLoad";
@@ -176,16 +176,18 @@ export default function RouteDetailScreen({ routeId }: { routeId: number }) {
         </View>
       </ScrollView>
       <View
-        style={{
-          pointerEvents: "box-none",
-          position: "absolute",
-          top: insets.top + 12,
-          left: 14,
-          right: 14,
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-        }}
+        style={[
+          passThrough,
+          {
+            position: "absolute",
+            top: insets.top + 12,
+            left: 14,
+            right: 14,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+          },
+        ]}
       >
         <RoundButton icon="chevron-back" label="Back" onPress={leave} />
         {route ? (

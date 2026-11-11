@@ -9,7 +9,7 @@ import { Button, Notice } from "../../components/ui";
 import { fonts, useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { categoryLabel } from "../reports/categories";
-import { FloatingButton, LayerChip, RoundButton, Sheet } from "./controls";
+import { FloatingButton, LayerChip, RoundButton, Sheet, passThrough } from "./controls";
 import { RouteShape } from "./RouteShape";
 import { useLoad } from "./useLoad";
 import {
@@ -129,16 +129,18 @@ export default function RoutesScreen() {
         style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
       />
       <View
-        style={{
-          pointerEvents: "box-none",
-          position: "absolute",
-          top: insets.top + 10,
-          left: 14,
-          right: 14,
-          flexDirection: "row",
-          flexWrap: "wrap",
-          gap: 6,
-        }}
+        style={[
+          passThrough,
+          {
+            position: "absolute",
+            top: insets.top + 10,
+            left: 14,
+            right: 14,
+            flexDirection: "row",
+            flexWrap: "wrap",
+            gap: 6,
+          },
+        ]}
       >
         {LAYERS.map(({ layer, label, icon }) => (
           <LayerChip
@@ -156,16 +158,18 @@ export default function RoutesScreen() {
       <View
         onLayout={(event) => setBottomHeight(Math.round(event.nativeEvent.layout.height))}
 
-        style={{ pointerEvents: "box-none", position: "absolute", left: 0, right: 0, bottom: 0 }}
+        style={[passThrough, { position: "absolute", left: 0, right: 0, bottom: 0 }]}
       >
         <View
-          style={{
-            pointerEvents: "box-none",
-            alignItems: "flex-end",
-            gap: 8,
-            paddingHorizontal: 14,
-            marginBottom: 12,
-          }}
+          style={[
+            passThrough,
+            {
+              alignItems: "flex-end",
+              gap: 8,
+              paddingHorizontal: 14,
+              marginBottom: 12,
+            },
+          ]}
         >
           <FloatingButton
             label="Report"

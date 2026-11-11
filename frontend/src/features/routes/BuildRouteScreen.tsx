@@ -8,7 +8,7 @@ import { EMPTY_SCENE, type MapMessage } from "../../components/routeMapBridge";
 import { Button, Field, Notice } from "../../components/ui";
 import { fonts, useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
-import { RoundButton, Sheet } from "./controls";
+import { RoundButton, Sheet, passThrough } from "./controls";
 import { ROUTE_NAME_MAX, routeDistanceMeters, validateRoute, type LatLng } from "./geometry";
 import { miles, type SavedRoute } from "./types";
 
@@ -53,16 +53,18 @@ export default function BuildRouteScreen() {
         style={{ flex: 1 }}
       />
       <View
-        style={{
-          pointerEvents: "box-none",
-          position: "absolute",
-          top: insets.top + 12,
-          left: 14,
-          right: 14,
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 10,
-        }}
+        style={[
+          passThrough,
+          {
+            position: "absolute",
+            top: insets.top + 12,
+            left: 14,
+            right: 14,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+          },
+        ]}
       >
         <RoundButton
           icon="chevron-back"

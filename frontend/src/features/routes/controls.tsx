@@ -1,7 +1,11 @@
 import type { PropsWithChildren } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme, type Palette } from "../../theme";
+
+// Overlay wrappers let taps through to the map. React Native Web honors box-none only from a
+// compiled StyleSheet, not an inline style.
+export const passThrough = StyleSheet.create({ box: { pointerEvents: "box-none" } }).box;
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
