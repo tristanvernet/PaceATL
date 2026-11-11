@@ -12,7 +12,6 @@ type Slot =
   | { route: string; label: string; icon: keyof typeof Ionicons.glyphMap }
   | "log";
 
-// Routes not listed here (progress) stay reachable by URL but get no tab.
 const BAR: Slot[] = [
   { route: "index", label: "Today", icon: "sunny-outline" },
   { route: "routes", label: "Routes", icon: "map-outline" },
@@ -100,7 +99,6 @@ export default function TabLayout() {
       <Tabs.Screen name="routes" options={{ title: "Routes" }} />
       <Tabs.Screen name="coach" options={{ title: "Coach" }} />
       <Tabs.Screen name="you" options={{ title: "You" }} />
-      <Tabs.Screen name="progress" options={{ href: null }} />
     </Tabs>
   );
 }

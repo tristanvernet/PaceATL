@@ -222,7 +222,7 @@ export function Field({
           props.style,
         ]}
       />
-      {error && (
+      {!!error && (
         <Text
           accessibilityLiveRegion="polite"
           style={{ color: c.error, fontSize: 12 }}
