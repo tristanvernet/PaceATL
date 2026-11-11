@@ -1,45 +1,179 @@
-import { useEffect, useState } from "react";
-import { useRouter } from "expo-router";
-import { apiRequest } from "../../api/client";
-import { BackButton, Button, Card, Field, Heading, Label, Notice, Screen } from "../../components/ui";
+import { Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  BackButton,
+  Loaded,
+  Heading,
+  Notice,
+  Screen,
+} from "../../components/ui";
+import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
+import { SignInPrompt } from "../../components/SignInPrompt";
+import { useApi } from "../../api/useResource";
 
-type Achievement = { key: string; name: string; description: string; icon: string; unlocked: boolean; earnedAt: string | null };
-type Rewards = { stats: { workoutCount: number; totalDistanceMiles: number; totalMinutes: number }; achievements: Achievement[] };
-type ActivityResult = { unlocked: Array<{ key: string; name: string; description: string }> };
+type Achievement = {
+  key: string;
+  name: string;
+  description: string;
+  icon: string;
+  unlocked: boolean;
+  earnedAt: string | null;
+};
+export type Rewards = {
+  stats: {
+    workoutCount: number;
+    totalDistanceMiles: number;
+    totalMinutes: number;
+  };
+  achievements: Achievement[];
+};
+
+const glyph = (icon: string) =>
+  (icon in Ionicons.glyphMap
+    ? icon
+    : "ribbon") as keyof typeof Ionicons.glyphMap;
+// earnedAt is a MySQL DATETIME in UTC ("2026-11-10 15:46:50"), which not every
+// JS engine parses, so read the date part only.
+const earnedOn = (earnedAt: string) =>
+  new Date(`${earnedAt.slice(0, 10)}T00:00:00Z`).toLocaleDateString(undefined, {
+    timeZone: "UTC",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 
 export function RewardsScreen() {
-  const router = useRouter(); const { user, ready } = useSession();
-  const [data,setData]=useState<Rewards|null>(null); const [error,setError]=useState(""); const [notice,setNotice]=useState("");
-  const [distance,setDistance]=useState("1"); const [minutes,setMinutes]=useState("20"); const [loading,setLoading]=useState(false);
-  async function load(){ if(!user)return; setLoading(true); setError(""); try{setData(await apiRequest<Rewards>("/api/rewards/"));}catch(e){setError(e instanceof Error?e.message:"Could not load achievements.");}finally{setLoading(false);} }
-  useEffect(()=>{
-    const controller = new AbortController();
-    setData(null); setError(""); setNotice("");
-    if (!ready || !user) return () => controller.abort();
-    setLoading(true);
-    apiRequest<Rewards>("/api/rewards/", {signal: controller.signal})
-      .then(result => { if (!controller.signal.aborted) setData(result); })
-      .catch(e => { if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "Could not load achievements."); })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
-    return () => controller.abort();
-  },[ready,user?.id]);
-  async function addTestWorkout(){
-    const d=Number(distance), m=Number(minutes); setError(""); setNotice("");
-    if(!Number.isFinite(d)||d<0||d>500){setError("Distance must be between 0 and 500 miles.");return;}
-    if(!Number.isFinite(m)||m<1||m>1440){setError("Duration must be between 1 and 1440 minutes.");return;}
-    setLoading(true); try{
-      const result=await apiRequest<ActivityResult>("/api/rewards/activity",{method:"POST",body:JSON.stringify({activityType:"run",distanceMiles:d,durationMinutes:m})});
-      setNotice(result.unlocked.length ? `New Achievement Unlocked: ${result.unlocked.map(x=>x.name).join(", ")}` : "Workout added. Keep going toward your next achievement!");
-      await load();
-    }catch(e){setError(e instanceof Error?e.message:"Workout could not be added.");}finally{setLoading(false);}
-  }
-  return <Screen><BackButton/><Heading eyebrow="Rewards" title="My Achievements" subtitle="Build consistency and unlock badges as you record activity."/>
-    {!ready ? <Notice text="Checking your account…"/> : !user ? <Card><Label>Sign in required</Label><Label secondary>Achievements are saved to your PaceATL account.</Label><Button title="Log in" onPress={()=>router.push("/login")}/></Card> : <>
-      {notice && <Notice text={notice}/>} {error && <Notice text={error} error/>}
-      <Card><Label>Your progress</Label><Label secondary>{data ? `${data.stats.workoutCount} workouts • ${data.stats.totalDistanceMiles.toFixed(2)} miles • ${data.stats.totalMinutes} minutes` : "Loading progress…"}</Label></Card>
-      {data?.achievements.map(a=><Card key={a.key}><Label>{a.unlocked ? "✓ " : "○ "}{a.name}</Label><Label secondary>{a.description}{a.unlocked && a.earnedAt ? ` Unlocked ${new Date(a.earnedAt).toLocaleDateString()}.` : ""}</Label></Card>)}
-      <Card><Label>Test the reward system</Label><Label secondary>Add a sample completed run. This writes a real test activity to your account so the full screen → API → database → badge flow can be verified.</Label><Field label="Distance in miles" keyboardType="decimal-pad" value={distance} onChangeText={setDistance}/><Field label="Duration in minutes" keyboardType="number-pad" value={minutes} onChangeText={setMinutes}/><Button title="Add sample workout" loading={loading} onPress={addTestWorkout}/></Card>
-    </>}
-  </Screen>;
+  const { ready, user } = useSession();
+  return (
+    <Screen>
+      <BackButton />
+      <Heading
+        eyebrow="Rewards"
+        title="Achievements"
+        subtitle="Badges unlock as you log workouts."
+      />
+      {!ready ? (
+        <Notice text="Checking your account…" />
+      ) : user ? (
+        <Badges />
+      ) : (
+        <SignInPrompt
+          title="Earn badges"
+          text="Achievements are saved to your PaceATL account."
+        />
+      )}
+    </Screen>
+  );
+}
+
+function Badges() {
+  const c = useTheme();
+  const { state, reload } = useApi<Rewards>("/api/rewards");
+  return (
+    <Loaded state={state} reload={reload} loading="Loading achievements…">
+      {(data) => {
+        const { stats, achievements } = data;
+        const unlocked = achievements.filter((a) => a.unlocked).length;
+        return (
+          <>
+            <View
+              style={{
+                flexDirection: "row",
+                padding: 14,
+                borderRadius: 18,
+                backgroundColor: c.hero,
+                marginBottom: 18,
+              }}
+            >
+              {[
+                {
+                  value: `${unlocked}/${achievements.length}`,
+                  label: "unlocked",
+                },
+                { value: String(stats.workoutCount), label: "workouts" },
+                { value: stats.totalDistanceMiles.toFixed(1), label: "miles" },
+                { value: String(stats.totalMinutes), label: "minutes" },
+              ].map((s) => (
+                <View key={s.label} style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      color: c.heroText,
+                      fontSize: 19,
+                      fontWeight: "700",
+                      fontVariant: ["tabular-nums"],
+                    }}
+                  >
+                    {s.value}
+                  </Text>
+                  <Text style={{ color: c.heroMuted, fontSize: 11 }}>
+                    {s.label}
+                  </Text>
+                </View>
+              ))}
+            </View>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+              {achievements.map((a) => (
+                <View
+                  key={a.key}
+                  accessible
+                  accessibilityLabel={`${a.name}, ${a.unlocked ? "unlocked" : "locked"}. ${a.description}`}
+                  style={{
+                    flexBasis: "47%",
+                    flexGrow: 1,
+                    padding: 14,
+                    gap: 6,
+                    borderRadius: 18,
+                    backgroundColor: c.panel,
+                    borderWidth: 1,
+                    borderColor: c.border,
+                    opacity: a.unlocked ? 1 : 0.7,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 22,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 4,
+                      backgroundColor: a.unlocked ? c.primary : c.soft,
+                    }}
+                  >
+                    <Ionicons
+                      name={a.unlocked ? glyph(a.icon) : "lock-closed-outline"}
+                      size={20}
+                      color={a.unlocked ? c.onPrimary : c.muted}
+                    />
+                  </View>
+                  <Text
+                    style={{ color: c.text, fontSize: 14, fontWeight: "700" }}
+                  >
+                    {a.name}
+                  </Text>
+                  <Text
+                    style={{ color: c.muted, fontSize: 12, lineHeight: 17 }}
+                  >
+                    {a.description}
+                  </Text>
+                  <Text
+                    style={{
+                      color: a.unlocked ? c.primary : c.muted,
+                      fontSize: 11,
+                      fontWeight: "700",
+                    }}
+                  >
+                    {a.unlocked && a.earnedAt
+                      ? `Unlocked ${earnedOn(a.earnedAt)}`
+                      : "Locked"}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </>
+        );
+      }}
+    </Loaded>
+  );
 }

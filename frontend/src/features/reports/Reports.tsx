@@ -1,96 +1,166 @@
 import { useState } from "react";
-import {Screen,Heading,BackButton,Card,Label,Button,Field,Notice,} from "../../components/ui";
+import { Pressable, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { apiRequest, errorMessage } from "../../api/client";
+import {
+  BackButton,
+  Button,
+  Field,
+  Heading,
+  Notice,
+  Screen,
+  SectionLabel,
+  useLeave,
+} from "../../components/ui";
+import { useTheme } from "../../theme";
+import { SignInPrompt } from "../../components/SignInPrompt";
+import { useSession } from "../auth/SessionProvider";
+import type { LatLng } from "../routes/geometry";
+import { HAZARD_CATEGORIES, HAZARD_CATEGORY_KEYS, type HazardCategory } from "./categories";
 
-import { apiRequest } from "../../api/client";
+type Submit =
+  { status: "editing" | "submitting" | "submitted" } | { status: "error"; message: string };
 
-
-const CATEGORIES = [
-  { label: "Poor Lighting", value: "lighting" },
-  { label: "Hazard / Obstruction", value: "hazard" },
-  { label: "Suspicious Activity", value: "suspicious" },
-  { label: "Uneven Surface", value: "surface" },
-];
-
-export function SafetyReport({
-  onClose,
-  currentLocation,
-  routeId,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  currentLocation?: { latitude: number; longitude: number };
-  routeId?: number;
-}) {
-  const [category, setCategory] = useState("hazard");
+export function ReportScreen({ location, routeId }: { location: LatLng; routeId: number | null }) {
+  const c = useTheme();
+  const { user, ready } = useSession();
+  const [category, setCategory] = useState<HazardCategory>("hazard");
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [submit, setSubmit] = useState<Submit>({ status: "editing" });
+  const done = useLeave("/routes");
 
-  const handleSubmit = async () => {
-    if (submitting) return;
-    setSubmitting(true);
-    setError("");
-
+  async function send() {
+    setSubmit({ status: "submitting" });
     try {
       await apiRequest("/api/reports/report", {
         method: "POST",
         body: JSON.stringify({
-          title: `Safety Concern: ${category}`,
+          title: title.trim(),
           category,
-          description,
-          latitude: currentLocation?.latitude || 33.749,
-          longitude: currentLocation?.longitude || -84.388,
-          routeId,
+          description: description.trim(),
+          latitude: location.latitude,
+          longitude: location.longitude,
+          ...(routeId === null ? {} : { routeId }),
         }),
       });
-
-      setSuccess(true);
-      setTimeout(() => {
-        setSuccess(false);
-        setDescription("");
-        onClose();
-      }, 1500);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not submit the report. Please try again.");
-    } finally {
-      setSubmitting(false);
+      setSubmit({ status: "submitted" });
+    } catch (e) {
+      setSubmit({
+        status: "error",
+        message: errorMessage(e, "Could not submit the report. Try again."),
+      });
     }
-  };
+  }
 
-   return (
+  if (submit.status === "submitted")
+    return (
+      <Screen>
+        <BackButton />
+        <View style={{ alignItems: "center", gap: 14, paddingVertical: 28 }}>
+          <View
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 32,
+              backgroundColor: c.soft,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Ionicons name="checkmark" size={32} color={c.primary} />
+          </View>
+          <Heading
+            title="Report sent"
+            subtitle="Thanks for looking out for other runners. An admin reviews every report before it appears on the map."
+          />
+        </View>
+        <Button title="Done" onPress={done} />
+      </Screen>
+    );
+
+  return (
     <Screen>
       <BackButton />
       <Heading
         eyebrow="Safety"
         title="Report a hazard"
-        subtitle="Reports are reviewed by an administrator."
+        subtitle="Tell other runners what to watch for. An admin reviews each report before it shows on the map."
       />
-      {success ? (
-        <Notice text="Report submitted for admin review!" />
+      {!ready ? null : !user ? (
+        <SignInPrompt
+          title="Sign in to report a hazard"
+          text="Reports are tied to your account so admins can follow up."
+        />
       ) : (
-        <Card>
-          <Label>Select category</Label>
-          {CATEGORIES.map((cat) => (
-            <Button
-              key={cat.value}
-              title={cat.label}
-              secondary={category !== cat.value}
-              onPress={() => setCategory(cat.value)}
-            />
-          ))}
+        <>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 16 }}>
+            <Ionicons name="location-outline" size={15} color={c.muted} />
+            <Text style={{ color: c.muted, fontSize: 13 }}>
+              {routeId === null ? "Map location" : "On your route"} · {location.latitude.toFixed(4)}
+              , {location.longitude.toFixed(4)}
+            </Text>
+          </View>
+          <SectionLabel>Category</SectionLabel>
+          <View
+            accessibilityRole="radiogroup"
+            accessibilityLabel="Category"
+            style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 18 }}
+          >
+            {HAZARD_CATEGORY_KEYS.map((key) => {
+              const on = key === category;
+              const color = on ? c.onPrimary : c.text;
+              return (
+                <Pressable
+                  key={key}
+                  accessibilityRole="radio"
+                  aria-checked={on}
+                  onPress={() => setCategory(key)}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    paddingHorizontal: 13,
+                    paddingVertical: 9,
+                    borderRadius: 999,
+                    borderWidth: 1,
+                    borderColor: on ? c.primary : c.border,
+                    backgroundColor: on ? c.primary : c.panel,
+                  }}
+                >
+                  <Ionicons name={HAZARD_CATEGORIES[key].icon} size={15} color={color} />
+                  <Text style={{ color, fontSize: 13, fontWeight: "700" }}>
+                    {HAZARD_CATEGORIES[key].label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
           <Field
-            label="Description (optional)"
-            placeholder="Details"
+            label="Title"
+            placeholder="Broken pavement near Irwin St"
+            maxLength={255}
+            value={title}
+            onChangeText={setTitle}
+          />
+          <Field
+            label="Details (optional)"
+            placeholder="What should people look out for?"
             multiline
-            numberOfLines={3}
-            style={{ minHeight: 96, textAlignVertical: "top" }}
+            numberOfLines={4}
+            maxLength={1000}
+            style={{ minHeight: 104, textAlignVertical: "top" }}
             value={description}
             onChangeText={setDescription}
           />
-          {error ? <Notice text={error} error /> : null}
-          <Button title="Submit report" loading={submitting} onPress={handleSubmit} />
-        </Card>
+          {submit.status === "error" ? <Notice text={submit.message} error /> : null}
+          <Button
+            title="Submit report"
+            loading={submit.status === "submitting"}
+            disabled={!title.trim()}
+            onPress={send}
+          />
+        </>
       )}
     </Screen>
   );

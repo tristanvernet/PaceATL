@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type PropsWithChildren } from "react";
-import { apiRequest, ApiError } from "../../api/client";
+import { apiRequest, ApiError, errorMessage } from "../../api/client";
 import { restoreSessionToken, saveSessionToken } from "./session-storage";
 
 export type User = { id: number; name: string; email: string; role: string };
@@ -24,7 +24,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
       setUser(null);
       if (e instanceof ApiError && e.status === 401) {
         await saveSessionToken(null);
-      } else setError(e instanceof Error ? e.message : "Could not restore your session.");
+      } else setError(errorMessage(e, "Could not restore your session."));
     } finally { setReady(true); }
   }
   useEffect(() => { void refresh(); }, []);

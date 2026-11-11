@@ -1,108 +1,254 @@
-import {useEffect, useState} from "react";
-
-import {useLocalSearchParams, useRouter} from "expo-router";
-import {Screen, Heading, BackButton, Card, Label, Button, Notice} from "../../components/ui";
-import {apiRequest, ApiError} from "../../api/client";
-import {Linking, Platform} from "react-native";
-import {useSession} from "../auth/SessionProvider";
+import { useState } from "react";
+import { Linking, Pressable, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import {
+  Screen,
+  Heading,
+  BackButton,
+  Button,
+  Notice,
+  Loaded,
+  SectionLabel,
+} from "../../components/ui";
+import { apiRequest, ApiError, errorMessage } from "../../api/client";
+import { useTheme } from "../../theme";
+import { useSession } from "../auth/SessionProvider";
+import { invalidate, useApi } from "../../api/useResource";
 import type { Tutorial } from "./types";
 
-const Iframe: any = "iframe";
+type Save =
+  { kind: "idle" } | { kind: "saving" } | { kind: "failed"; message: string };
+
 export default function TutorialDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const c = useTheme();
   const router = useRouter();
   const session = useSession();
-  const [tutorial, setTutorial] = useState<Tutorial | null>(null);
-  const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [retry, setRetry] = useState(0);
+  const { state, reload, set } = useApi<Tutorial>(
+    `/api/tutorials/${encodeURIComponent(id)}`,
+  );
+  const [save, setSave] = useState<Save>({ kind: "idle" });
+  const [videoError, setVideoError] = useState(false);
 
-  function getYouTubeEmbedUrl(url: string) {
-  const videoId=url.split("youtu.be/")[1]?.split("?")[0];
-  return `https://www.youtube.com/embed/${videoId}`;
-}
-  useEffect(() => {
-    if (!session.ready) return;
-    const controller = new AbortController();
-    setTutorial(null); setDone(false); setError("");
-    apiRequest<Tutorial>(`/api/tutorials/${encodeURIComponent(id)}`, { signal: controller.signal })
-      .then((data) => {
-        if (!controller.signal.aborted) { setTutorial(data); setDone(data.completed); }
-      })
-      .catch((e) => { if (!controller.signal.aborted) setError(e.message); });
-    return () => controller.abort();
-  }, [id, session.ready, session.user?.id, retry]);
-
-  async function markCompleted() {
-    setLoading(true); setError("");
+  async function markDone(tutorial: Tutorial) {
+    setSave({ kind: "saving" });
     try {
-      await apiRequest(`/api/tutorials/${encodeURIComponent(id)}/complete`, { method: "POST" });
-      setDone(true);
+      await apiRequest(
+        `/api/tutorials/${encodeURIComponent(tutorial.tutId)}/complete`,
+        { method: "POST" },
+      );
+      set({ ...tutorial, completed: true });
+      void invalidate("/api/tutorials");
+      setSave({ kind: "idle" });
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) await session.refresh();
-      setError(e instanceof Error ? e.message : "Unable to save completion.");
-    } finally { setLoading(false); }
+      setSave({
+        kind: "failed",
+        message: errorMessage(e, "Unable to save completion."),
+      });
+    }
   }
 
   return (
     <Screen>
       <BackButton />
-      <Heading
-        eyebrow={tutorial?.category ?? "Tutorial"}
-        title={tutorial?.title ?? "Workout instructions"}
-        subtitle={tutorial?.description}
-      />
+      <Loaded state={state} reload={reload} loading="Loading tutorial…">
+        {(t) => (
+          <>
+            <Heading
+              eyebrow={t.category}
+              title={t.title}
+              subtitle={t.description}
+            />
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                gap: 6,
+                marginTop: -8,
+                marginBottom: 18,
+              }}
+            >
+              {[
+                t.difficultyLevel,
+                `${t.estimatedDurationMins} min`,
+                t.targetMuscleGroup,
+              ].map((tag) => (
+                <View
+                  key={tag}
+                  style={{
+                    paddingVertical: 5,
+                    paddingHorizontal: 10,
+                    borderRadius: 999,
+                    backgroundColor: c.soft,
+                  }}
+                >
+                  <Text
+                    style={{ color: c.text, fontSize: 12, fontWeight: "600" }}
+                  >
+                    {tag}
+                  </Text>
+                </View>
+              ))}
+            </View>
 
-      {!!error && <Notice text={error} error />}
-      {!!error && !tutorial && <Button title="Try again" onPress={() => setRetry(retry + 1)} />}
-      {!tutorial && !error && <Notice text="Loading tutorial…" />}
-
-      {tutorial && (
-        <>
-          <Card>
-            <Label secondary>
-              {tutorial.difficultyLevel} · {tutorial.estimatedDurationMins} min ·{" "}
-              {tutorial.targetMuscleGroup}
-            </Label>
-            {!!tutorial.videoUrl && Platform.OS === "web" && (
-                <Iframe
-                src={getYouTubeEmbedUrl(tutorial.videoUrl)}
-                title="Tutorial video"
-                width="100%"
-                height="315"
-                style={{ border: 0, borderRadius: 12 }}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerPolicy="strict-origin-when-cross-origin"
-                allowFullScreen
-              />
+            {!!t.videoUrl && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Watch video"
+                onPress={() => {
+                  setVideoError(false);
+                  Linking.openURL(t.videoUrl).catch(() => setVideoError(true));
+                }}
+                style={({ pressed }) => ({
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: 14,
+                  borderRadius: 18,
+                  marginBottom: 18,
+                  backgroundColor: c.hero,
+                  opacity: pressed ? 0.85 : 1,
+                })}
+              >
+                <View
+                  style={{
+                    width: 42,
+                    height: 42,
+                    borderRadius: 21,
+                    backgroundColor: c.heroAccent,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Ionicons name="play" size={18} color={c.hero} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      color: c.heroText,
+                      fontSize: 15,
+                      fontWeight: "700",
+                    }}
+                  >
+                    Watch video
+                  </Text>
+                  <Text style={{ color: c.heroMuted, fontSize: 12 }}>
+                    Opens on YouTube
+                  </Text>
+                </View>
+                <Ionicons name="open-outline" size={18} color={c.heroMuted} />
+              </Pressable>
             )}
-            {!!tutorial.videoUrl && Platform.OS !== "web" && (
+            {videoError && <Notice text="Could not open the video." error />}
+
+            <SectionLabel>Steps</SectionLabel>
+            <View
+              style={{
+                backgroundColor: c.panel,
+                borderWidth: 1,
+                borderColor: c.border,
+                borderRadius: 16,
+                marginBottom: 18,
+              }}
+            >
+              {t.steps.map((step, i) => (
+                <View
+                  key={step.stepId}
+                  style={{
+                    flexDirection: "row",
+                    gap: 12,
+                    padding: 14,
+                    borderTopWidth: i ? 1 : 0,
+                    borderColor: c.border,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: 13,
+                      backgroundColor: c.soft,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: c.primary,
+                        fontSize: 13,
+                        fontWeight: "800",
+                      }}
+                    >
+                      {step.stepNumber}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1, gap: 6 }}>
+                    <Text
+                      style={{ color: c.text, fontSize: 14, lineHeight: 20 }}
+                    >
+                      {step.instructionText}
+                    </Text>
+                    {!!step.tipNotes && (
+                      <View style={{ flexDirection: "row", gap: 6 }}>
+                        <Ionicons
+                          name="bulb-outline"
+                          size={14}
+                          color={c.muted}
+                          style={{ marginTop: 2 }}
+                        />
+                        <Text
+                          style={{
+                            flex: 1,
+                            color: c.muted,
+                            fontSize: 13,
+                            lineHeight: 19,
+                          }}
+                        >
+                          {step.tipNotes}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </View>
+
+            {save.kind === "failed" && <Notice text={save.message} error />}
+            {!session.user ? (
               <Button
-                title="Watch video"
-                onPress={() => { void Linking.openURL(tutorial.videoUrl).catch(() => setError("Could not open the video.")); }}
+                title="Sign in to track progress"
+                secondary
+                onPress={() => router.push("/welcome")}
+              />
+            ) : t.completed ? (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  padding: 14,
+                }}
+              >
+                <Ionicons name="checkmark-circle" size={20} color={c.primary} />
+                <Text
+                  style={{ color: c.text, fontSize: 15, fontWeight: "700" }}
+                >
+                  Completed
+                </Text>
+              </View>
+            ) : (
+              <Button
+                title="Mark as done"
+                loading={save.kind === "saving"}
+                onPress={() => void markDone(t)}
               />
             )}
-          </Card>
-
-          {tutorial.steps.map((step) => (
-            <Card key={step.stepId}>
-              <Label>
-                Step {step.stepNumber}: {step.instructionText}
-              </Label>
-              {!!step.tipNotes && <Label secondary>Tip: {step.tipNotes}</Label>}
-            </Card>
-          ))}
-
-          {!session.user ? (
-            <Button title="Log in to save completion" onPress={() => router.push("/login")} />
-          ) : done ? (
-            <Notice text="Nice work! This tutorial is saved as completed." />
-          ) : (
-            <Button title="Mark as done" onPress={markCompleted} loading={loading} />
-          )}
-        </>
-      )}
+          </>
+        )}
+      </Loaded>
     </Screen>
   );
 }

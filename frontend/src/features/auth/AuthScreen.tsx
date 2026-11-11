@@ -1,67 +1,80 @@
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, Text } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { validateAuth } from "./validation";
-import {
-  Screen,
-  Heading,
-  BackButton,
-  Field,
-  Button,
-  Notice,
-} from "../../components/ui";
+import { Screen, Heading, BackButton, Field, Button, Notice } from "../../components/ui";
 import { useTheme } from "../../theme";
-import { apiRequest } from "../../api/client";
+import { apiRequest, errorMessage } from "../../api/client";
 import { useSession, type SignInResult } from "./SessionProvider";
 
-export default function AuthScreen({ mode }: { mode: "login" | "signup" }) {
+type Mode = "login" | "signup";
+const COPY: Record<
+  Mode,
+  { title: string; subtitle: string; submit: string; switchText: string; switchLink: string; other: Mode }
+> = {
+  login: {
+    title: "Welcome back",
+    subtitle: "Sign in to pick up your week, routes, and coach.",
+    submit: "Sign in",
+    switchText: "New to PaceATL?",
+    switchLink: "Create account",
+    other: "signup",
+  },
+  signup: {
+    title: "Create your account",
+    subtitle: "Save workouts, routes, and progress across devices.",
+    submit: "Create account",
+    switchText: "Already have an account?",
+    switchLink: "Sign in",
+    other: "login",
+  },
+};
+
+export default function AuthScreen({ mode }: { mode: Mode }) {
   const router = useRouter();
   const c = useTheme();
   const session = useSession();
+  const copy = COPY[mode];
   const [loading, setLoading] = useState(false);
-  const [values, setValues] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const [values, setValues] = useState({ name: "", email: "", password: "", confirmPassword: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [visible, setVisible] = useState(false);
   const [notice, setNotice] = useState("");
   function change(key: keyof typeof values, value: string) {
     setValues((current) => ({ ...current, [key]: value }));
-    setErrors((current) => ({ ...current, [key]: "" }));
+    setErrors(({ [key]: _, ...rest }) => rest);
     setNotice("");
   }
   async function submit() {
     const next = validateAuth(values, mode);
     setErrors(next);
-    if (Object.keys(next).length) { setNotice("Check the highlighted fields."); return; }
-    setLoading(true); setNotice("");
+    if (Object.keys(next).length) {
+      setNotice("Check the highlighted fields.");
+      return;
+    }
+    setLoading(true);
+    setNotice("");
     try {
       const result = await apiRequest<SignInResult>(`/api/auth/${mode}`, {
-        method: "POST", body: JSON.stringify(values),
+        method: "POST",
+        body: JSON.stringify(values),
       });
       await session.signIn(result);
       setValues({ name: "", email: "", password: "", confirmPassword: "" });
-      // Going back keeps the requesting screen's state, such as a drawn route.
-      if (result.user.role === "admin") { router.replace("/admin"); return; }
-      if (router.canGoBack()) router.back();
-      else router.replace("/profile");
-    } catch (e) { setNotice(e instanceof Error ? e.message : "Unable to sign in."); }
-    finally { setLoading(false); }
+      router.replace("/");
+    } catch (e) {
+      setNotice(errorMessage(e, "Unable to sign in."));
+    } finally {
+      setLoading(false);
+    }
   }
+  const password = { secureTextEntry: !visible, autoCapitalize: "none", autoCorrect: false, autoComplete: "off" } as const;
   return (
     <Screen>
       <BackButton />
-      <Heading
-        eyebrow="Your account"
-        title={mode === "signup" ? "Create your account" : "Welcome back"}
-        subtitle={mode === "signup" ? "Save your progress with a PaceATL account." : "Sign in to keep track of your tutorials."}
-      />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+      <Heading eyebrow="PaceATL" title={copy.title} subtitle={copy.subtitle} />
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
         {mode === "signup" && (
           <Field
             label="Name"
@@ -88,10 +101,7 @@ export default function AuthScreen({ mode }: { mode: "login" | "signup" }) {
           value={values.password}
           onChangeText={(v) => change("password", v)}
           error={errors.password}
-          secureTextEntry={!visible}
-          autoCapitalize="none"
-          autoCorrect={false}
-          autoComplete="off"
+          {...password}
         />
         {mode === "signup" && (
           <Field
@@ -99,41 +109,28 @@ export default function AuthScreen({ mode }: { mode: "login" | "signup" }) {
             value={values.confirmPassword}
             onChangeText={(v) => change("confirmPassword", v)}
             error={errors.confirmPassword}
-            secureTextEntry={!visible}
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="off"
+            {...password}
           />
         )}
         <Pressable
           accessibilityRole="checkbox"
           accessibilityState={{ checked: visible }}
           onPress={() => setVisible(!visible)}
-          style={{ minHeight: 44, justifyContent: "center", marginBottom: 12 }}
+          style={{ minHeight: 40, flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 14 }}
         >
-          <Text style={{ color: c.text }}>
-            {visible ? "☑" : "☐"} Show password
+          <Ionicons name={visible ? "eye-off-outline" : "eye-outline"} size={18} color={c.muted} />
+          <Text style={{ color: c.muted, fontSize: 13, fontWeight: "600" }}>
+            {visible ? "Hide password" : "Show password"}
           </Text>
         </Pressable>
-        <Button
-          title={mode === "signup" ? "Sign up" : "Log in"}
-          onPress={submit}
-          loading={loading}
-          disabled={!session.ready}
-        />
-        {notice && (
-          <Notice
-            text={notice}
-            error
-          />
-        )}
-        <Button
-          title={mode === "signup" ? "View login screen" : "View signup screen"}
-          secondary
-          onPress={() =>
-            router.replace(mode === "signup" ? "/login" : "/signup")
-          }
-        />
+        {!!notice && <Notice text={notice} error />}
+        <Button title={copy.submit} onPress={submit} loading={loading} disabled={!session.ready} />
+        <View style={{ flexDirection: "row", justifyContent: "center", gap: 6, marginTop: 18 }}>
+          <Text style={{ color: c.muted, fontSize: 14 }}>{copy.switchText}</Text>
+          <Pressable accessibilityRole="link" onPress={() => router.replace(`/${copy.other}`)}>
+            <Text style={{ color: c.primary, fontSize: 14, fontWeight: "700" }}>{copy.switchLink}</Text>
+          </Pressable>
+        </View>
       </KeyboardAvoidingView>
     </Screen>
   );

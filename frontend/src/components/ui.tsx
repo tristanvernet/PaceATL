@@ -1,6 +1,7 @@
-import type { PropsWithChildren } from "react";
+import { Children, Fragment, useState, type PropsWithChildren, type ReactNode } from "react";
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -8,11 +9,16 @@ import {
   TextInput,
   View,
   type TextInputProps,
+  type TextStyle,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { spacing, useTheme } from "../theme";
+import { useRouter, type Href } from "expo-router";
+import { fonts, spacing, useTheme } from "../theme";
+
+import type { Load } from "../api/useResource";
+
+type IconName = keyof typeof Ionicons.glyphMap;
 
 export function Screen({ children }: PropsWithChildren) {
   const c = useTheme();
@@ -25,12 +31,6 @@ export function Screen({ children }: PropsWithChildren) {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.screen}
       >
-        <View style={styles.brand}>
-          <Text style={[styles.brandText, { color: c.text }]}>PaceATL</Text>
-          <Text style={{ color: c.muted, fontSize: 12 }}>
-            Foundation preview
-          </Text>
-        </View>
         {children}
       </ScrollView>
     </SafeAreaView>
@@ -52,8 +52,8 @@ export function Heading({
         <Text
           style={{
             color: c.muted,
-            fontSize: 11,
-            letterSpacing: 1.5,
+            fontSize: 12,
+            letterSpacing: 0.5,
             fontWeight: "600",
           }}
         >
@@ -64,15 +64,16 @@ export function Heading({
         accessibilityRole="header"
         style={{
           color: c.text,
-          fontSize: 30,
-          fontWeight: "600",
-          letterSpacing: -0.9,
+          fontFamily: fonts.heading,
+          fontSize: 29,
+          lineHeight: 34,
+          letterSpacing: -0.6,
         }}
       >
         {title}
       </Text>
       {subtitle && (
-        <Text style={{ color: c.muted, fontSize: 15, lineHeight: 23 }}>
+        <Text style={{ color: c.muted, fontSize: 14, lineHeight: 21 }}>
           {subtitle}
         </Text>
       )}
@@ -97,6 +98,21 @@ export function Card({ children }: PropsWithChildren) {
     </View>
   );
 }
+/** Small uppercase label over a group. `flush` drops the spacing for one inside a row or field. */
+export function SectionLabel({ children, flush = false }: { children: string; flush?: boolean }) {
+  const c = useTheme();
+  return (
+    <Text
+      accessibilityRole={flush ? undefined : "header"}
+      style={[
+        { color: c.muted, fontSize: 11, fontWeight: "700", letterSpacing: 1 },
+        !flush && { margin: 4, marginBottom: 8 },
+      ]}
+    >
+      {children.toUpperCase()}
+    </Text>
+  );
+}
 export function Label({
   children,
   secondary = false,
@@ -106,9 +122,9 @@ export function Label({
     <Text
       style={{
         color: secondary ? c.muted : c.text,
-        fontSize: secondary ? 13 : 17,
-        lineHeight: secondary ? 21 : 24,
-        fontWeight: secondary ? "400" : "600",
+        fontSize: secondary ? 13 : 16,
+        lineHeight: secondary ? 20 : 22,
+        fontWeight: secondary ? "400" : "700",
       }}
     >
       {children}
@@ -137,27 +153,84 @@ export function Button({
       disabled={disabled || loading}
       onPress={onPress}
       style={({ pressed }) => ({
-        minHeight: 48,
-        paddingHorizontal: 16,
-        paddingVertical: 13,
-        borderRadius: 12,
-        backgroundColor: secondary ? c.soft : c.primary,
+        minHeight: 50,
+        paddingHorizontal: 18,
+        paddingVertical: 14,
+        borderRadius: 14,
+        backgroundColor: secondary ? c.panel : c.primary,
+        borderWidth: secondary ? 1 : 0,
+        borderColor: c.border,
         opacity: disabled ? 0.5 : pressed ? 0.75 : 1,
-        flexDirection: "row",
-        gap: 10,
         alignItems: "center",
-        justifyContent: "space-between",
+        justifyContent: "center",
       })}
     >
       {loading ? (
         <ActivityIndicator color={color} />
       ) : (
-        <Text style={{ color, fontSize: 15, fontWeight: "600", flexShrink: 1 }}>
+        <Text style={{ color, fontSize: 15, fontWeight: "700", textAlign: "center" }}>
           {title}
         </Text>
       )}
-      <Ionicons name="arrow-forward" color={color} size={18} />
     </Pressable>
+  );
+}
+// On hero surfaces the accent, not primary, is the button fill: BeltLine's
+// light primary is the same ink as its hero.
+export function HeroButton({
+  title,
+  onPress,
+  compact = false,
+}: {
+  title: string;
+  onPress: () => void;
+  compact?: boolean;
+}) {
+  const c = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => ({
+        minHeight: compact ? undefined : 50,
+        paddingVertical: compact ? 9 : 0,
+        paddingHorizontal: compact ? 14 : 18,
+        borderRadius: compact ? 12 : 14,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: c.heroAccent,
+        opacity: pressed ? 0.8 : 1,
+      })}
+    >
+      <Text style={{ color: c.hero, fontSize: compact ? 13 : 15, fontWeight: "800" }}>{title}</Text>
+    </Pressable>
+  );
+}
+/** The dark feature card: a kicker line, a serif title, then the card's own content. */
+export function Hero({
+  kicker,
+  icon,
+  right,
+  title,
+  label,
+  children,
+}: PropsWithChildren<{ kicker: string; icon?: IconName; right?: string; title: string; label?: string }>) {
+  const c = useTheme();
+  const kickerText = { color: c.heroAccent, fontSize: 11, fontWeight: "700", letterSpacing: 1.2 } as const;
+  return (
+    <View accessibilityLabel={label} style={{ backgroundColor: c.hero, borderRadius: 22, padding: 18 }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          {icon && <Ionicons name={icon} size={16} color={c.heroAccent} />}
+          <Text style={kickerText}>{kicker}</Text>
+        </View>
+        {right ? <Text style={kickerText}>{right}</Text> : null}
+      </View>
+      <Text style={{ color: c.heroText, fontFamily: fonts.heading, fontSize: 22, marginTop: 6, marginBottom: 12 }}>
+        {title}
+      </Text>
+      {children}
+    </View>
   );
 }
 export function Notice({
@@ -173,7 +246,7 @@ export function Notice({
       accessibilityLiveRegion="polite"
       style={{
         padding: 14,
-        borderRadius: 12,
+        borderRadius: 14,
         backgroundColor: c.soft,
         marginVertical: 12,
       }}
@@ -190,15 +263,85 @@ export function Notice({
     </View>
   );
 }
+export function Loaded<T>({
+  state,
+  reload,
+  loading,
+  children,
+}: {
+  state: Load<T>;
+  reload: () => void;
+  loading: string;
+  children: (data: T) => ReactNode;
+}) {
+  if (state.status === "loading") return <Notice text={loading} />;
+  if (state.status === "error")
+    return (
+      <>
+        <Notice text={state.message} error />
+        <Button title="Try again" secondary onPress={reload} />
+      </>
+    );
+  return children(state.data);
+}
+
+// The focus underline replaces the browser outline, which RN types do not expose.
+const noWebOutline = (Platform.OS === "web" ? { outlineStyle: "none" } : null) as TextStyle | null;
+
+/** A labeled text input. With `unit` it becomes a large number on an underline, as in the log sheet. */
 export function Field({
   label,
   error,
+  unit,
   ...props
-}: TextInputProps & { label: string; error?: string }) {
+}: TextInputProps & { label: string; error?: string; unit?: string }) {
   const c = useTheme();
+  const [focused, setFocused] = useState(false);
+  if (unit)
+    return (
+      <View
+        style={{
+          borderBottomWidth: focused ? 2 : 1,
+          borderBottomColor: error ? c.error : focused ? c.primary : c.border,
+          paddingTop: 12,
+          paddingBottom: 10,
+          marginBottom: 14,
+        }}
+      >
+        <SectionLabel flush>{label}</SectionLabel>
+        <View style={{ flexDirection: "row", alignItems: "baseline", marginTop: 4 }}>
+          <TextInput
+            accessibilityLabel={`${label} in ${unit}`}
+            placeholderTextColor={c.muted}
+            {...props}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            style={[
+              noWebOutline,
+              {
+                flex: 1,
+                minWidth: 0,
+                color: c.text,
+                fontSize: 34,
+                fontWeight: "700",
+                letterSpacing: -1.5,
+                fontVariant: ["tabular-nums"],
+                paddingVertical: 0,
+              },
+            ]}
+          />
+          <Text style={{ color: c.muted, fontSize: 15, fontWeight: "600", marginLeft: 6 }}>{unit}</Text>
+        </View>
+        {!!error && (
+          <Text accessibilityLiveRegion="polite" style={{ color: c.error, fontSize: 12, marginTop: 4 }}>
+            {error}
+          </Text>
+        )}
+      </View>
+    );
   return (
     <View style={{ gap: 6, marginBottom: 16 }}>
-      <Text style={{ color: c.text, fontSize: 14 }}>{label}</Text>
+      <SectionLabel flush>{label}</SectionLabel>
       <TextInput
         accessibilityLabel={label}
         placeholderTextColor={c.muted}
@@ -209,7 +352,7 @@ export function Field({
             color: c.text,
             borderWidth: 1,
             borderColor: error ? c.error : c.border,
-            borderRadius: 12,
+            borderRadius: 14,
             padding: 13,
             fontSize: 16,
             minHeight: 48,
@@ -217,7 +360,7 @@ export function Field({
           props.style,
         ]}
       />
-      {error && (
+      {!!error && (
         <Text
           accessibilityLiveRegion="polite"
           style={{ color: c.error, fontSize: 12 }}
@@ -228,51 +371,248 @@ export function Field({
     </View>
   );
 }
-export function BackButton() {
+/** Goes back, or to `fallback` when the screen was opened directly (a deep link or reload). */
+export function useLeave(fallback: Href = "/") {
   const router = useRouter();
+  return () => (router.canGoBack() ? router.back() : router.replace(fallback));
+}
+export function BackButton() {
+  const leave = useLeave();
+  const c = useTheme();
   return (
-    <View style={{ marginBottom: 18 }}>
-      <Button
-        title="Back"
-        secondary
-        onPress={() =>
-          router.canGoBack() ? router.back() : router.replace("/")
-        }
-      />
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Back"
+      onPress={leave}
+      style={({ pressed }) => ({
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        marginBottom: 18,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: c.panel,
+        borderWidth: 1,
+        borderColor: c.border,
+        opacity: pressed ? 0.75 : 1,
+      })}
+    >
+      <Ionicons name="chevron-back" size={18} color={c.text} />
+    </Pressable>
+  );
+}
+const SEGMENT_SIZES = {
+  compact: {
+    container: { padding: 3, borderRadius: 10, borderWidth: 0 },
+    option: { flex: undefined, paddingVertical: 5, paddingHorizontal: 9, borderRadius: 8 },
+    fontSize: 12,
+    background: "background",
+    selected: "panel",
+    selectedText: "text",
+  },
+  regular: {
+    container: { padding: 4, borderRadius: 12, borderWidth: 1 },
+    option: { flex: 1, paddingVertical: 9, paddingHorizontal: 4, borderRadius: 9 },
+    fontSize: 13,
+    background: "panel",
+    selected: "primary",
+    selectedText: "onPrimary",
+  },
+} as const;
+
+export function SegmentedControl<T extends string>({
+  options,
+  value,
+  onChange,
+  compact = false,
+  label,
+}: {
+  options: readonly { value: T; label: string }[];
+  value: T;
+  onChange: (value: T) => void;
+  compact?: boolean;
+  label?: string;
+}) {
+  const c = useTheme();
+  const size = SEGMENT_SIZES[compact ? "compact" : "regular"];
+  return (
+    <View
+      accessibilityRole="radiogroup"
+      accessibilityLabel={label}
+      style={{
+        flexDirection: "row",
+        ...size.container,
+        backgroundColor: c[size.background],
+        borderColor: c.border,
+      }}
+    >
+      {options.map((option) => {
+        const on = option.value === value;
+        return (
+          <Pressable
+            key={option.value}
+            accessibilityRole="radio"
+            aria-checked={on}
+            onPress={() => onChange(option.value)}
+            style={{
+              ...size.option,
+              alignItems: "center",
+              backgroundColor: on ? c[size.selected] : "transparent",
+            }}
+          >
+            <Text
+              style={{
+                fontSize: size.fontSize,
+                fontWeight: "600",
+                color: on ? c[size.selectedText] : c.muted,
+              }}
+            >
+              {option.label}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
-export function Placeholder({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]!.toUpperCase())
+    .join("");
+export function Avatar({ name, large = false }: { name: string; large?: boolean }) {
+  const c = useTheme();
+  const size = large ? 54 : 30;
   return (
-    <>
-      <Card>
-        <Label>{title}</Label>
-        <Label secondary>{description}</Label>
-      </Card>
-      <Notice text="Feature placeholder only. No information is saved or submitted." />
-    </>
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: large ? c.primary : c.soft,
+      }}
+    >
+      <Text style={{ color: large ? c.onPrimary : c.primary, fontSize: large ? 18 : 11, fontWeight: "800" }}>
+        {initials(name)}
+      </Text>
+    </View>
   );
 }
-const styles = StyleSheet.create({
-  screen: {
-    padding: spacing.md,
-    paddingBottom: 36,
-    maxWidth: 560,
-    width: "100%",
-    alignSelf: "center",
-  },
-  brand: {
+export function ListGroup({ children }: PropsWithChildren) {
+  const c = useTheme();
+  const rows = Children.toArray(children);
+  return (
+    <View
+      style={{
+        backgroundColor: c.panel,
+        borderWidth: 1,
+        borderColor: c.border,
+        borderRadius: 16,
+        marginBottom: 14,
+        overflow: "hidden",
+      }}
+    >
+      {rows.map((row, i) => (
+        <Fragment key={i}>
+          {i > 0 && <View style={{ height: 1, backgroundColor: c.border }} />}
+          {row}
+        </Fragment>
+      ))}
+    </View>
+  );
+}
+export function ListRow({
+  title,
+  subtitle,
+  icon,
+  detail,
+  right,
+  onPress,
+}: {
+  title: string;
+  subtitle?: string;
+  icon?: IconName;
+  detail?: string;
+  right?: ReactNode;
+  onPress?: () => void;
+}) {
+  const c = useTheme();
+  const body = (
+    <>
+      {icon && <Ionicons name={icon} size={18} color={c.text} />}
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={{ color: c.text, fontSize: 14, fontWeight: "600" }}>{title}</Text>
+        {subtitle && <Text style={{ color: c.muted, fontSize: 12 }}>{subtitle}</Text>}
+      </View>
+      {right}
+      {detail && <Text style={{ color: c.muted, fontSize: 13 }}>{detail}</Text>}
+      {onPress && <Ionicons name="chevron-forward" size={16} color={c.muted} />}
+    </>
+  );
+  const row = {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 30,
     gap: 12,
-  },
-  brandText: { fontSize: 20, fontWeight: "700", letterSpacing: -0.6 },
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    minHeight: 48,
+  } as const;
+  if (!onPress) return <View style={row}>{body}</View>;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [row, { opacity: pressed ? 0.7 : 1 }]}
+    >
+      {body}
+    </Pressable>
+  );
+}
+export function Stats({ items, bordered = false }: { items: { value: string; label: string }[]; bordered?: boolean }) {
+  const c = useTheme();
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        marginVertical: 12,
+        ...(bordered && { borderWidth: 1, borderColor: c.border, borderRadius: 14 }),
+      }}
+    >
+      {items.map((item, i) => (
+        <View
+          key={item.label}
+          accessible
+          accessibilityLabel={`${item.value} ${item.label}`}
+          style={{
+            flex: 1,
+            ...(bordered && {
+              paddingVertical: 11,
+              paddingHorizontal: 12,
+              borderLeftWidth: i ? 1 : 0,
+              borderLeftColor: c.border,
+            }),
+          }}
+        >
+          <Text style={{
+            color: c.text,
+            fontSize: bordered ? 17 : 20,
+            fontWeight: "700",
+            ...(!bordered && { letterSpacing: -0.5, fontVariant: ["tabular-nums"] as const }),
+          }}>
+            {item.value}
+          </Text>
+          <Text style={{ color: c.muted, fontSize: 11 }}>{item.label}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+export const column = { maxWidth: 560, width: "100%", alignSelf: "center" } as const;
+const styles = StyleSheet.create({
+  screen: { ...column, paddingHorizontal: 22, paddingTop: spacing.sm, paddingBottom: 36 },
 });
