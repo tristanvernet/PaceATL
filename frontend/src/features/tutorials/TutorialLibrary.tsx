@@ -13,12 +13,13 @@ type Library = { tutorials: TutorialSummary[]; completed: Set<string> | null };
 
 // The list endpoint has no completion state, so signed-in users fetch each
 // tutorial's detail for it. The catalog is a handful of rows.
-async function loadLibrary(signedIn: boolean): Promise<Library> {
-  const tutorials = await apiRequest<TutorialSummary[]>("/api/tutorials");
+async function loadLibrary(signedIn: boolean, signal: AbortSignal): Promise<Library> {
+  const tutorials = await apiRequest<TutorialSummary[]>("/api/tutorials", { signal });
+  if (signal.aborted) throw new Error("Tutorial loading was cancelled.");
   if (!signedIn) return { tutorials, completed: null };
   const details = await Promise.all(
     tutorials.map((t) =>
-      apiRequest<Tutorial>(`/api/tutorials/${encodeURIComponent(t.tutId)}`),
+      apiRequest<Tutorial>(`/api/tutorials/${encodeURIComponent(t.tutId)}`, { signal }),
     ),
   );
   return {
@@ -31,8 +32,8 @@ export function TutorialLibrary() {
   const c = useTheme();
   const router = useRouter();
   const { user } = useSession();
-  const { state, reload } = useResource("/api/tutorials#library", () =>
-    loadLibrary(!!user),
+  const { state, reload } = useResource("/api/tutorials#library", (signal) =>
+    loadLibrary(!!user, signal),
   );
   const [filter, setFilter] = useState<string | null>(null);
   const open = (id: string) =>

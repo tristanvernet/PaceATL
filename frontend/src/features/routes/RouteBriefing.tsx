@@ -78,7 +78,7 @@ export function RouteBriefing({ routeId, hazards }: { routeId: number; hazards: 
   const { state, reload } = useResource(
     `briefing:${routeId}`,
     // Gathering map data and writing the briefing can take up to a minute.
-    () => apiRequest<Briefing>(`/api/routes/${routeId}/briefing`, { method: "POST", timeoutMs: 60000 }),
+    (signal) => apiRequest<Briefing>(`/api/routes/${routeId}/briefing`, { method: "POST", timeoutMs: 60000, signal }),
     { staleMs: 10 * 60_000 },
   );
 
