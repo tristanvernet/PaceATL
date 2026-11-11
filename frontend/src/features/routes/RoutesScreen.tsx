@@ -1,374 +1,344 @@
-import { useEffect, useRef, useState } from "react";
-import { Pressable, Text, View } from "react-native";
-import { useRouter } from "expo-router";
-import { apiRequest } from "../../api/client";
-import InfoCard from "../weather/InfoCard";
-import {
-  Screen,
-  Heading,
-  Card,
-  Label,
-  Button,
-  Field,
-  Notice,
-} from "../../components/ui";
-import {
-  MapPlaceholder,
-  type RouteMode,
-} from "../../components/MapPlaceholder";
+import { useCallback, useRef, useState, type ReactNode } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { RouteMap } from "../../components/RouteMap";
-import { useTheme } from "../../theme";
+import type { Layer, MapMessage, MapScene, Selection } from "../../components/routeMapBridge";
+import { Button, Notice } from "../../components/ui";
+import { fonts, useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
+import { categoryLabel } from "../reports/categories";
+import { FloatingButton, LayerChip, RoundButton, Sheet, passThrough } from "./controls";
+import { RouteShape } from "./RouteShape";
+import { useLoad } from "./useLoad";
 import {
-  metersToMiles,
-  routeDistanceMeters,
-  validateRoute,
-  ROUTE_NAME_MAX,
-  type LatLng,
-} from "./geometry";
-import { savedOn, type SavedRoute, type SavedRoutes } from "./types";
-import { RouteBriefing } from "./RouteBriefing";
+  ATLANTA,
+  miles,
+  savedOn,
+  type Hazard,
+  type Hotspot,
+  type HotspotResult,
+  type Load,
+  type SavedRoute,
+} from "./types";
+import type { LatLng } from "./geometry";
 
-const miles = (meters: number) => `${metersToMiles(meters).toFixed(2)} mi`;
-const message = (error: unknown, fallback: string) =>
-  error instanceof Error ? error.message : fallback;
+const LAYERS: {
+  layer: Layer;
+  label: string;
+  icon: "trail-sign-outline" | "flame-outline" | "warning-outline";
+}[] = [
+  { layer: "routes", label: "My routes", icon: "trail-sign-outline" },
+  { layer: "hotspots", label: "Hotspots", icon: "flame-outline" },
+  { layer: "hazards", label: "Hazards", icon: "warning-outline" },
+];
+const LAYER_OF: Record<Selection["kind"], Layer> = {
+  route: "routes",
+  hotspot: "hotspots",
+  hazard: "hazards",
+};
+const ACTIVITY_LABELS: Record<string, string> = {
+  run: "running",
+  walk: "walking",
+  cycle: "cycling",
+};
 
-export interface ApprovedReport {
-    id: number;
-    title: string;
-    category: string;
-    description: string;
-    created_at: string;
+type Chosen =
+  | { kind: "route"; route: SavedRoute }
+  | { kind: "hotspot"; hotspot: Hotspot }
+  | { kind: "hazard"; hazard: Hazard };
+function resolve(
+  selection: Selection | null,
+  routes: SavedRoute[],
+  hotspots: Hotspot[],
+  hazards: Hazard[],
+): Chosen | null {
+  if (!selection) return null;
+  if (selection.kind === "route") {
+    const route = routes.find((r) => r.routeId === selection.id);
+    return route ? { kind: "route", route } : null;
   }
+  if (selection.kind === "hotspot") {
+    const hotspot = hotspots.find((h) => h.id === selection.id);
+    return hotspot ? { kind: "hotspot", hotspot } : null;
+  }
+  const hazard = hazards.find((h) => h.id === selection.id);
+  return hazard ? { kind: "hazard", hazard } : null;
+}
+const valueOf = <T,>(load: Load<T>, empty: T) => (load.status === "ready" ? load.value : empty);
+const settled = (load: Load<unknown>) => load.status !== "loading";
 
 export default function RoutesScreen() {
-  const [mode, setMode] = useState<RouteMode>("Explore");
-  const [detail, setDetail] = useState(false);
-  const [points, setPoints] = useState<LatLng[]>([]);
-  const [name, setName] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState("");
-  const [saved, setSaved] = useState<SavedRoutes>({ status: "loading" });
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [confirmingId, setConfirmingId] = useState<number | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [savedError, setSavedError] = useState("");
-  const [attempt, setAttempt] = useState(0);
-  // The list is loaded once per signed-in user, then kept current by save and delete.
-  const loadedFor = useRef<number | null>(null);
-  const { user, ready } = useSession();
-  const router = useRouter();
   const c = useTheme();
-  const listUser = mode === "Saved" && ready ? user?.id : undefined;
-  const [reports, setReports] = useState<ApprovedReport[]>([]);
-  const [loadingReports, setLoadingReports] = useState(false);
-  useEffect(() => {
-    if (listUser === undefined || loadedFor.current === listUser) return;
-    const controller = new AbortController();
-    setSaved({ status: "loading" });
-    apiRequest<SavedRoute[]>("/api/routes", { signal: controller.signal })
-      .then((routes) => {
-        if (controller.signal.aborted) return;
-        loadedFor.current = listUser;
-        setSaved({ status: "ready", routes });
-      })
-      .catch((e) => {
-        if (!controller.signal.aborted)
-          setSaved({ status: "error", message: message(e, "Could not load your routes.") });
-      });
-    return () => controller.abort();
-  }, [listUser, attempt]);
-  async function deleteRoute(routeId: number) {
-    setDeleting(true);
-    setSavedError("");
-    try {
-      await apiRequest(`/api/routes/${routeId}`, { method: "DELETE" });
-      setSaved((list) =>
-        list.status === "ready"
-          ? { status: "ready", routes: list.routes.filter((r) => r.routeId !== routeId) }
-          : list,
-      );
-      setConfirmingId(null);
-    } catch (e) {
-      setSavedError(message(e, "Could not delete the route."));
-    } finally {
-      setDeleting(false);
-    }
-  }
-  useEffect(() => {
-    setLoadingReports(true);
-    apiRequest<{ data: ApprovedReport[] }>("/api/reports/approved").
-    then((res) =>  {
-      const reportList = Array.isArray(res) ? res : res?.data ?? [];
-      setReports(reportList);}).catch((err) => console.error(err)).finally(() => setLoadingReports(false));}, []);
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { user, ready } = useSession();
+  const [layers, setLayers] = useState<Record<Layer, boolean>>({
+    routes: true,
+    hotspots: true,
+    hazards: true,
+  });
+  const [selection, setSelection] = useState<Selection | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const [bottomHeight, setBottomHeight] = useState(0);
+  const center = useRef<LatLng>(ATLANTA);
+  // Coming back from build or delete must show the current list.
+  useFocusEffect(useCallback(() => setAttempt((n) => n + 1), []));
 
-  async function saveRoute() {
-    setSaving(true);
-    setSaveError("");
-    try {
-      const route = await apiRequest<SavedRoute>("/api/routes", {
-        method: "POST",
-        body: JSON.stringify({ name, points }),
-      });
-      setSaved((list) =>
-        list.status === "ready" ? { status: "ready", routes: [route, ...list.routes] } : list,
-      );
-      setSelectedId(route.routeId);
-      setPoints([]);
-      setName("");
-      setMode("Saved");
-    } catch (e) {
-      setSaveError(message(e, "Could not save the route."));
-    } finally {
-      setSaving(false);
-    }
-  }
-  const draftError = Object.values(validateRoute({ name, points }))[0];
-  const selected =
-    saved.status === "ready"
-      ? (saved.routes.find((r) => r.routeId === selectedId) ?? saved.routes[0])
-      : undefined;
-  const descriptions = {
-    Explore:
-      "A selected route’s distance, activity, weather, approved reports and save/share actions will appear here.",
-    Hotspots:
-      "A selected area’s name, description and popularity source will appear here.",
-      
+  const routesLoad = useLoad<SavedRoute[]>(user ? "/api/routes" : null, attempt);
+  const hotspotsLoad = useLoad<HotspotResult>("/api/hotspots");
+  const hazardsLoad = useLoad<Hazard[]>("/api/reports/approved");
+  const routes = user ? valueOf(routesLoad, []) : [];
+  const hotspots = valueOf(hotspotsLoad, null)?.hotspots ?? [];
+  const hazards = valueOf(hazardsLoad, []);
+
+  const allSettled =
+    ready && (!user || settled(routesLoad)) && settled(hotspotsLoad) && settled(hazardsLoad);
+  const scene: MapScene = {
+    routes: routes.map((route) => ({ id: route.routeId, points: route.points })),
+    hotspots,
+    hazards,
+    draft: [],
+    layers,
+    selection,
+    fit: {
+      key: allSettled && bottomHeight ? "initial" : "",
+      points: routes.length ? routes.flatMap((route) => route.points) : [...hotspots, ...hazards],
+      inset: { top: insets.top + 52, bottom: bottomHeight },
+    },
   };
+  const onMessage = (message: MapMessage) => {
+    if (message.type === "moved") center.current = message.center;
+    else if (message.type === "tap") setSelection(null);
+    else setSelection(message.target);
+  };
+
+  const chosen = resolve(selection, routes, hotspots, hazards);
+  const layerErrors = [hotspotsLoad, hazardsLoad].flatMap((load) =>
+    load.status === "error" ? [load.message] : [],
+  );
+  const hotspotNote = valueOf(hotspotsLoad, null)?.message;
+
   return (
-    <Screen>
-      <Heading eyebrow="Explore your pace" title="Find your next route." />
+    <View style={{ flex: 1, backgroundColor: c.background }}>
+      <RouteMap
+        label="Routes map"
+        scene={scene}
+        onMessage={onMessage}
+        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+      />
       <View
-        accessibilityRole="tablist"
-        style={{
-          flexDirection: "row",
-          backgroundColor: c.soft,
-          padding: 4,
-          borderRadius: 14,
-          marginBottom: 16,
-        }}
+        style={[
+          passThrough,
+          {
+            position: "absolute",
+            top: insets.top + 10,
+            left: 14,
+            right: 14,
+            flexDirection: "row",
+            flexWrap: "wrap",
+            gap: 6,
+          },
+        ]}
       >
-        {(["Explore", "Hotspots", "Build", "Saved"] as const).map((item) => (
-          <Pressable
-            key={item}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: item === mode }}
+        {LAYERS.map(({ layer, label, icon }) => (
+          <LayerChip
+            key={layer}
+            label={label}
+            icon={icon}
+            on={layers[layer]}
             onPress={() => {
-              setMode(item);
-              setDetail(false);
-              setConfirmingId(null);
-              setSavedError("");
+              setLayers((current) => ({ ...current, [layer]: !current[layer] }));
+              if (selection && LAYER_OF[selection.kind] === layer) setSelection(null);
             }}
-            style={{
-              flex: 1,
-              minHeight: 44,
-              justifyContent: "center",
-              alignItems: "center",
-              backgroundColor: item === mode ? c.panel : "transparent",
-              borderRadius: 10,
-            }}
-          >
-            <Text style={{ color: c.text, fontSize: 12 }}>{item}</Text>
-          </Pressable>
+          />
         ))}
       </View>
-      {mode === "Build" ? (
-        <>
-          <RouteMap
-            points={points}
-            onAddPoint={(point) => setPoints((current) => [...current, point])}
+      <View
+        onLayout={(event) => setBottomHeight(Math.round(event.nativeEvent.layout.height))}
+
+        style={[passThrough, { position: "absolute", left: 0, right: 0, bottom: 0 }]}
+      >
+        <View
+          style={[
+            passThrough,
+            {
+              alignItems: "flex-end",
+              gap: 8,
+              paddingHorizontal: 14,
+              marginBottom: 12,
+            },
+          ]}
+        >
+          <FloatingButton
+            label="Report"
+            icon="flag-outline"
+            onPress={() =>
+              router.push({
+                pathname: "/report",
+                params: {
+                  latitude: center.current.latitude.toFixed(5),
+                  longitude: center.current.longitude.toFixed(5),
+                },
+              })
+            }
           />
-          <View style={{ marginTop: 16 }}>
-            <Card>
-              <Label>{miles(routeDistanceMeters(points))}</Label>
-              <Label secondary>Tap the map to add points</Label>
-              <Button
-                title="Undo last point"
-                secondary
-                disabled={points.length === 0}
-                onPress={() => setPoints((current) => current.slice(0, -1))}
-              />
-              <Button
-                title="Clear"
-                secondary
-                disabled={points.length === 0}
-                onPress={() => setPoints([])}
-              />
-            </Card>
-            {!ready ? null : !user ? (
-              <Card>
-                <Label>Sign in to save this route</Label>
-                <Label secondary>Your drawing stays here while you log in.</Label>
-                <Button title="Log in" onPress={() => router.push("/login")} />
-              </Card>
-            ) : (
-              <Card>
-                <Field
-                  label="Route name"
-                  placeholder="Piedmont loop"
-                  maxLength={ROUTE_NAME_MAX}
-                  value={name}
-                  onChangeText={setName}
-                />
-                {draftError ? <Label secondary>{draftError}</Label> : null}
-                {saveError ? <Notice text={saveError} error /> : null}
+          <FloatingButton
+            primary
+            label="Build a route"
+            icon="pencil-outline"
+            onPress={() => router.push("/routes/new")}
+          />
+        </View>
+        {chosen ? (
+          <SelectionCard onClose={() => setSelection(null)}>
+            {chosen.kind === "route" ? (
+              <>
+                <Title>{chosen.route.name}</Title>
+                <Meta>
+                  {miles(chosen.route.distanceMeters)} · saved {savedOn(chosen.route)}
+                </Meta>
                 <Button
-                  title="Save route"
-                  loading={saving}
-                  disabled={!!draftError}
-                  onPress={saveRoute}
+                  title="Open route"
+                  onPress={() => router.push(`/routes/${chosen.route.routeId}`)}
                 />
-              </Card>
+              </>
+            ) : chosen.kind === "hotspot" ? (
+              <>
+                <Title>{chosen.hotspot.name}</Title>
+                {chosen.hotspot.description ? <Body>{chosen.hotspot.description}</Body> : null}
+                <Meta>
+                  Popular for{" "}
+                  {chosen.hotspot.activities.map((a) => ACTIVITY_LABELS[a] ?? a).join(", ")}
+                </Meta>
+              </>
+            ) : (
+              <>
+                <Title>{chosen.hazard.title}</Title>
+                {chosen.hazard.description ? <Body>{chosen.hazard.description}</Body> : null}
+                <Meta>Reported hazard · {categoryLabel(chosen.hazard.category)}</Meta>
+              </>
             )}
+          </SelectionCard>
+        ) : null}
+        <Sheet>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "baseline",
+              marginBottom: 4,
+            }}
+          >
+            <Text
+              accessibilityRole="header"
+              style={{ color: c.text, fontFamily: fonts.heading, fontSize: 19 }}
+            >
+              Saved routes
+            </Text>
+            {routes.length ? (
+              <Text style={{ color: c.muted, fontSize: 12 }}>
+                {routes.length} {routes.length === 1 ? "route" : "routes"}
+              </Text>
+            ) : null}
           </View>
-        </>
-      ) : mode === "Saved" ? (
-        !ready ? (
-          <Notice text="Checking your account…" />
-        ) : !user ? (
-          <Card>
-            <Label>Sign in to see your saved routes</Label>
-            <Label secondary>Routes you save are kept in your PaceATL account.</Label>
-            <Button title="Log in" onPress={() => router.push("/login")} />
-          </Card>
-        ) : saved.status === "loading" ? (
-          <Notice text="Loading your routes…" />
-        ) : saved.status === "error" ? (
-          <>
-            <Notice text={saved.message} error />
-            <Button title="Try again" onPress={() => setAttempt((n) => n + 1)} />
-          </>
-        ) : !selected ? (
-          <Card>
-            <Label>No saved routes yet</Label>
-            <Label secondary>Draw a route in Build and save it to see it here.</Label>
-            <Button title="Build a route" onPress={() => setMode("Build")} />
-          </Card>
-        ) : (
-          <>
-            {/* Remounting per route refits the map to the newly selected path. */}
-            <RouteMap key={selected.routeId} points={selected.points} />
-            {savedError ? <Notice text={savedError} error /> : null}
-            <View style={{ marginTop: 16 }}>
-              <RouteBriefing key={selected.routeId} routeId={selected.routeId} />
+          {!ready ? (
+            <Meta>Checking your account…</Meta>
+          ) : !user ? (
+            <View style={{ gap: 10, paddingVertical: 6 }}>
+              <Body>Sign in to save routes, get a briefing before you go, and log them.</Body>
+              <Button title="Sign in" onPress={() => router.push("/welcome")} />
             </View>
-            <View style={{ gap: 12 }}>
-              {saved.routes.map((route) => (
-                <View
+          ) : routesLoad.status === "loading" ? (
+            <Meta>Loading your routes…</Meta>
+          ) : routesLoad.status === "error" ? (
+            <>
+              <Notice text={routesLoad.message} error />
+              <Button title="Try again" secondary onPress={() => setAttempt((n) => n + 1)} />
+            </>
+          ) : routes.length === 0 ? (
+            <View style={{ paddingVertical: 6, gap: 4 }}>
+              <Body>No saved routes yet.</Body>
+              <Meta>Tap Build a route and draw one on the map.</Meta>
+            </View>
+          ) : (
+            <ScrollView style={{ maxHeight: 190 }}>
+              {routes.map((route, i) => (
+                <Pressable
                   key={route.routeId}
-                  style={{
-                    padding: 16,
-                    gap: 8,
-                    borderRadius: 18,
-                    backgroundColor: c.panel,
-                    borderWidth: route === selected ? 2 : 1,
-                    borderColor: route === selected ? c.primary : c.border,
-                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${route.name}, ${miles(route.distanceMeters)}`}
+                  onPress={() => router.push(`/routes/${route.routeId}`)}
+                  style={({ pressed }) => ({
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 12,
+                    paddingVertical: 11,
+                    borderTopWidth: i ? 1 : 0,
+                    borderTopColor: c.border,
+                    opacity: pressed ? 0.7 : 1,
+                  })}
                 >
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: route === selected }}
-                    onPress={() => setSelectedId(route.routeId)}
-                  >
-                    <Label>{route.name}</Label>
-                    <Label secondary>
-                      {miles(route.distanceMeters)} • Saved {savedOn(route)}
-                    </Label>
-                  </Pressable>
-                  {confirmingId === route.routeId ? (
-                    <>
-                      <Label secondary>Delete this route? This cannot be undone.</Label>
-                      <Button
-                        title="Delete route"
-                        loading={deleting}
-                        onPress={() => deleteRoute(route.routeId)}
-                      />
-                      <Button
-                        title="Keep route"
-                        secondary
-                        disabled={deleting}
-                        onPress={() => setConfirmingId(null)}
-                      />
-                    </>
-                  ) : (
-                    <Button
-                      title="Delete"
-                      secondary
-                      disabled={deleting}
-                      onPress={() => {
-                        setConfirmingId(route.routeId);
-                        setSavedError("");
-                      }}
-                    />
-                  )}
-                </View>
+                  <RouteShape points={route.points} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: c.text, fontSize: 14, fontWeight: "700" }}>
+                      {route.name}
+                    </Text>
+                    <Meta>
+                      {miles(route.distanceMeters)} · saved {savedOn(route)}
+                    </Meta>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={c.muted} />
+                </Pressable>
               ))}
-            </View>
-          </>
-        )
-      ) : (
-        <>
-          <MapPlaceholder mode={mode} />
-          <View style={{ marginTop: 16 }}>
-            <Card>
-              <Label>
-                {mode === "Hotspots" ? "Selected hotspot" : "Route information"}
-              </Label>
-              <Label secondary>{descriptions[mode]}</Label>
-              <Button
-                title={detail ? "Hide detail preview" : "Show detail preview"}
-                secondary
-                onPress={() => setDetail(!detail)}
-              />
-              {detail && (
-                <>
-                <Label secondary>
-                  This panel will show the selected record. No route or
-                  geographic data is loaded.
-                </Label>
-                  <InfoCard />
-                  </>
-              )}
-            </Card>
-
-              <Card>
-              <Label>Safety Reports</Label>
-
-              {loadingReports ? (
-                <Label secondary>Loading...</Label>
-              ) : reports.length === 0 ? (
-                <Label secondary>No safety hazard reports for this area.</Label>
-              ) : (
-                <View style={{ gap: 8, marginVertical: 8 }}>
-                  {reports.map((rep) => (
-                    <View
-                      key={rep.id}
-                      style={{
-                        padding: 10,
-                        borderRadius: 10,
-                        backgroundColor: c.soft,
-                      }}
-                    >
-                      <Label>{rep.title}</Label>
-                      {rep.description ? (
-                        <Label secondary>{rep.description}</Label>
-                      ) : null}
-                    </View>
-                  ))}
-                </View>
-              )}
-
-              <Button
-                title="Report a Safety Hazard"
-                secondary
-                onPress={() => router.push("/report")}
-              />
-            </Card>
-
-          </View>
-        </>
-      )}
-      <Notice text="Build and Saved use OpenStreetMap, and saved routes are kept in your account with an optional AI briefing. Explore and Hotspots are still layout previews, and no location permissions are requested." />
-    </Screen>
+            </ScrollView>
+          )}
+          {layerErrors.length || hotspotNote ? (
+            <Meta>{[...layerErrors, hotspotNote].filter(Boolean).join(" ")}</Meta>
+          ) : null}
+        </Sheet>
+      </View>
+    </View>
   );
-};
+}
+
+function SelectionCard({ children, onClose }: { children: ReactNode; onClose: () => void }) {
+  const c = useTheme();
+  return (
+    <View
+      style={{
+        marginHorizontal: 14,
+        marginBottom: 12,
+        padding: 14,
+        gap: 6,
+        borderRadius: 18,
+        backgroundColor: c.panel,
+        borderWidth: 1,
+        borderColor: c.border,
+      }}
+    >
+      <View style={{ position: "absolute", top: 8, right: 8, zIndex: 1 }}>
+        <RoundButton icon="close" label="Close" onPress={onClose} />
+      </View>
+      {children}
+    </View>
+  );
+}
+
+function Title({ children }: { children: ReactNode }) {
+  const c = useTheme();
+  return (
+    <Text style={{ color: c.text, fontSize: 16, fontWeight: "700", marginRight: 44 }}>
+      {children}
+    </Text>
+  );
+}
+function Body({ children }: { children: ReactNode }) {
+  const c = useTheme();
+  return <Text style={{ color: c.text, fontSize: 13, lineHeight: 19 }}>{children}</Text>;
+}
+function Meta({ children }: { children: ReactNode }) {
+  const c = useTheme();
+  return <Text style={{ color: c.muted, fontSize: 12, lineHeight: 18 }}>{children}</Text>;
+}

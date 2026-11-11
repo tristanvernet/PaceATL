@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
 import { View } from "react-native";
-import { routeMapHtml, useRouteMapBridge, type RouteMapProps } from "./routeMapBridge";
+import { mapHtml, useMapBridge, type RouteMapProps } from "./routeMapBridge";
 
-export function RouteMap(props: RouteMapProps) {
+export function RouteMap({ scene, onMessage, style, label }: RouteMapProps) {
   const frame = useRef<HTMLIFrameElement>(null);
-  const bridge = useRouteMapBridge(props, (message) =>
+  const bridge = useMapBridge(scene, onMessage, (message) =>
     frame.current?.contentWindow?.postMessage(message, "*"),
   );
   useEffect(() => {
@@ -15,11 +15,11 @@ export function RouteMap(props: RouteMapProps) {
     return () => window.removeEventListener("message", listener);
   }, [bridge]);
   return (
-    <View style={{ height: 320, borderRadius: 18, overflow: "hidden" }}>
+    <View style={[{ overflow: "hidden" }, style]}>
       <iframe
         ref={frame}
-        title="Route map"
-        srcDoc={routeMapHtml}
+        title={label}
+        srcDoc={mapHtml}
         onLoad={bridge.onLoad}
         style={{ border: 0, width: "100%", height: "100%" }}
       />
