@@ -30,6 +30,20 @@ const INTRO: Message = {
   text: "Hi, I'm your PaceATL coach. Ask me about your week, a route to try, or how to warm up.",
 };
 
+// The model answers in light markdown. Bold renders as bold; other emphasis
+// markers are dropped rather than shown as literal asterisks.
+function Markdown({ text }: { text: string }) {
+  return text.split(/(\*\*[^*]+\*\*)/).map((part, i) =>
+    part.startsWith("**") && part.endsWith("**") ? (
+      <Text key={i} style={{ fontWeight: "700" }}>
+        {part.slice(2, -2)}
+      </Text>
+    ) : (
+      part.replace(/^\s*[*-] /gm, "• ").replace(/\*([^*\n]+)\*/g, "$1")
+    ),
+  );
+}
+
 export function CoachChat() {
   const c = useTheme();
   const session = useSession();
@@ -111,7 +125,9 @@ export function CoachChat() {
                 borderColor: c.border,
               }}
             >
-              <Text style={{ color: mine ? c.heroText : c.text, fontSize: 14, lineHeight: 20 }}>{m.text}</Text>
+              <Text style={{ color: mine ? c.heroText : c.text, fontSize: 14, lineHeight: 20 }}>
+                {mine ? m.text : <Markdown text={m.text} />}
+              </Text>
             </View>
           );
         })}
@@ -153,6 +169,7 @@ export function CoachChat() {
             <Text style={{ color: c.error, fontSize: 14, lineHeight: 20 }}>{status.message}</Text>
             <Pressable
               accessibilityRole="button"
+              accessibilityLabel="Retry"
               onPress={retry}
               style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
             >
