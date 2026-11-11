@@ -42,7 +42,7 @@ export function RewardsScreen() {
 
 function Badges() {
   const c = useTheme();
-  const { state, reload } = useApi<Rewards>("/api/rewards/");
+  const { state, reload } = useApi<Rewards>("/api/rewards");
   if (state.status === "loading") return <Notice text="Loading achievements…" />;
   if (state.status === "error")
     return (

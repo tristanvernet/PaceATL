@@ -6,7 +6,7 @@ import { Avatar, BackButton, Button, Field, Heading, ListGroup, Notice, Screen, 
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { SignInPrompt } from "../../components/SignInPrompt";
-import { useApi } from "../../api/useResource";
+import { invalidate, useApi } from "../../api/useResource";
 import { miles } from "../routes/types";
 
 type Kind = "route" | "workout" | "goal";
@@ -91,7 +91,7 @@ function Community() {
       setTarget("");
       setSourceId(null);
       setStatus({ kind: "done", message: "Shared with the community." });
-      shares.reload();
+      void invalidate("/api/fitness/shares");
     } catch (e) {
       setStatus({ kind: "failed", message: errorMessage(e, "Could not share.") });
     }
@@ -101,6 +101,7 @@ function Community() {
     try {
       await apiRequest(`/api/fitness/shares/${id}`, { method: "DELETE" });
       if (shares.state.status === "ready") shares.set(shares.state.data.filter((s) => s.id !== id));
+      void invalidate("/api/fitness/shares");
       setStatus({ kind: "done", message: "Share removed. The original item is kept." });
     } catch (e) {
       setStatus({ kind: "failed", message: errorMessage(e, "Could not remove share.") });

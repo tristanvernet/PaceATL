@@ -54,7 +54,7 @@ function Account({ user }: { user: User }) {
   const c = useTheme();
   const router = useRouter();
   const admin = user.role === "admin";
-  const rewards = useApi<Rewards>("/api/rewards/");
+  const rewards = useApi<Rewards>("/api/rewards");
   const shares = useApi<Share[]>("/api/fitness/shares");
   const reports = useApi<unknown[]>(admin ? "/api/admin/reports" : null);
   const pending = reports.state.status === "ready" ? reports.state.data.length : 0;

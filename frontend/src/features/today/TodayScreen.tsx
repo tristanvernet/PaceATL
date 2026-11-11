@@ -41,7 +41,7 @@ export function TodayScreen() {
   const now = new Date();
   const date = `${now.toLocaleDateString("en-US", { weekday: "long" })} · ${now.toLocaleDateString("en-US", { month: "long", day: "numeric" })}`;
   const name = user?.name.trim().split(/\s+/)[0];
-  const weather = useApi<Weather>("/api/weather").state;
+  const weather = useApi<Weather>("/api/weather", { staleMs: 10 * 60_000 }).state;
   const workouts = useApi<Workout[]>(signedIn ? "/api/workouts" : null).state;
   const rewards = useApi<Rewards>(signedIn ? "/api/rewards" : null).state;
   const posts = useApi<Share[]>(signedIn ? "/api/fitness/shares" : null).state;

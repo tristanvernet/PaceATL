@@ -89,7 +89,7 @@ export default function RoutesScreen() {
 
   const savedRoutes = useApi<SavedRoute[]>(user ? "/api/routes" : null);
   const routesLoad = savedRoutes.state;
-  const hotspotsLoad = useApi<HotspotResult>("/api/hotspots").state;
+  const hotspotsLoad = useApi<HotspotResult>("/api/hotspots", { staleMs: 10 * 60_000 }).state;
   const hazardsLoad = useApi<Hazard[]>("/api/reports/approved").state;
   const routes = user ? valueOf(routesLoad, NO_ROUTES) : NO_ROUTES;
   const hotspots = valueOf(hotspotsLoad, null)?.hotspots ?? NO_HOTSPOTS;

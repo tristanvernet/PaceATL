@@ -8,7 +8,7 @@ import { useTheme } from "../../theme";
 import { SignInPrompt } from "../../components/SignInPrompt";
 import { useSession } from "../auth/SessionProvider";
 import { challengeSnapshot, isComplete, refreshChallenge, type TodayChallenge } from "../today/challenge";
-import type { Load } from "../../api/useResource";
+import { invalidate, type Load } from "../../api/useResource";
 import { savedToast, showToast } from "../today/toast";
 import { formatNumber } from "../../utils/format";
 import { NOTES_MAX, todayString, validateWorkout } from "./validation";
@@ -86,6 +86,7 @@ export function LogSheet() {
       const snapshot = challengeSnapshot();
       const prior = snapshot.status === "ready" ? snapshot : await (before.current ?? refreshChallenge());
       const result = await apiRequest<LoggedWorkout>("/api/workouts", { method: "POST", body: JSON.stringify(values) });
+      void invalidate("/api/workouts", "/api/rewards", "/api/fitness");
       const after = await refreshChallenge();
       showToast(savedToast(activity, isComplete(after) && !isComplete(prior), result.unlocked));
       close();

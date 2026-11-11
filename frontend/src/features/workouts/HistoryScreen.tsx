@@ -8,7 +8,7 @@ import { useTheme } from "../../theme";
 import { SignInPrompt } from "../../components/SignInPrompt";
 import { useSession } from "../auth/SessionProvider";
 import { refreshChallenge } from "../today/challenge";
-import { useApi } from "../../api/useResource";
+import { invalidate, useApi } from "../../api/useResource";
 import { Toast } from "../today/Toast";
 import { formatNumber } from "../../utils/format";
 import { ACTIVITIES, formatPace, type Workout } from "./types";
@@ -39,6 +39,7 @@ export function HistoryScreen() {
       setDeleted((ids) => new Set(ids).add(workoutId));
       setConfirming(null);
       void refreshChallenge();
+      void invalidate("/api/workouts", "/api/rewards", "/api/fitness");
     } catch (e) {
       setDeleteError(errorMessage(e, "Could not delete the activity."));
     } finally {

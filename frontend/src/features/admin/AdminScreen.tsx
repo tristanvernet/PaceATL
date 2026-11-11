@@ -23,10 +23,10 @@ export default function AdminScreen() {
 
 function Portal() {
   const c = useTheme();
-  const { state, reload } = useResource<Portal>("admin", async (signal) => {
+  const { state, reload } = useResource<Portal>("/api/admin", async () => {
     const [reports, users] = await Promise.all([
-      apiRequest<Report[]>("/api/admin/reports", { signal }),
-      apiRequest<Person[]>("/api/admin/users", { signal }),
+      apiRequest<Report[]>("/api/admin/reports"),
+      apiRequest<Person[]>("/api/admin/users"),
     ]);
     return { reports, users };
   });

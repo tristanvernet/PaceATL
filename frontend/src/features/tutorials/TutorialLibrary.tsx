@@ -13,11 +13,11 @@ type Library = { tutorials: TutorialSummary[]; completed: Set<string> | null };
 
 // The list endpoint has no completion state, so signed-in users fetch each
 // tutorial's detail for it. The catalog is a handful of rows.
-async function loadLibrary(signal: AbortSignal, signedIn: boolean): Promise<Library> {
-  const tutorials = await apiRequest<TutorialSummary[]>("/api/tutorials", { signal });
+async function loadLibrary(signedIn: boolean): Promise<Library> {
+  const tutorials = await apiRequest<TutorialSummary[]>("/api/tutorials");
   if (!signedIn) return { tutorials, completed: null };
   const details = await Promise.all(
-    tutorials.map((t) => apiRequest<Tutorial>(`/api/tutorials/${encodeURIComponent(t.tutId)}`, { signal })),
+    tutorials.map((t) => apiRequest<Tutorial>(`/api/tutorials/${encodeURIComponent(t.tutId)}`)),
   );
   return { tutorials, completed: new Set(details.filter((d) => d.completed).map((d) => d.tutId)) };
 }
@@ -26,7 +26,7 @@ export function TutorialLibrary() {
   const c = useTheme();
   const router = useRouter();
   const { user } = useSession();
-  const { state, reload } = useResource("tutorials", (signal) => loadLibrary(signal, !!user));
+  const { state, reload } = useResource("/api/tutorials#library", () => loadLibrary(!!user));
   const [filter, setFilter] = useState<string | null>(null);
   const open = (id: string) => router.push({ pathname: "/tutorials/[id]", params: { id } });
 

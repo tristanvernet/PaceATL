@@ -12,7 +12,7 @@ import { useSession } from "../auth/SessionProvider";
 import { RoundButton, Stats, passThrough } from "./controls";
 import { metersToMiles } from "./geometry";
 import { RouteBriefing } from "./RouteBriefing";
-import { useApi } from "../../api/useResource";
+import { invalidate, useApi } from "../../api/useResource";
 import {
   averagePace,
   hazardsNear,
@@ -74,6 +74,7 @@ export default function RouteDetailScreen({ routeId }: { routeId: number }) {
         body: JSON.stringify({ kind: "route", sourceId: route.routeId, title: route.name }),
       });
       setShare({ status: "shared" });
+      void invalidate("/api/fitness/shares");
     } catch (e) {
       setShare({ status: "error", message: errorMessage(e, "Could not share the route.") });
     }
@@ -83,6 +84,7 @@ export default function RouteDetailScreen({ routeId }: { routeId: number }) {
     try {
       await apiRequest(`/api/routes/${routeId}`, { method: "DELETE" });
       leave();
+      void invalidate("/api/routes", "/api/fitness");
     } catch (e) {
       setMenu({ status: "error", message: errorMessage(e, "Could not delete the route.") });
     }

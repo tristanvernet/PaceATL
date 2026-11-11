@@ -6,7 +6,7 @@ import { Screen, Heading, BackButton, Button, Notice, SectionLabel } from "../..
 import { apiRequest, ApiError, errorMessage } from "../../api/client";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
-import { useApi } from "../../api/useResource";
+import { invalidate, useApi } from "../../api/useResource";
 import type { Tutorial } from "./types";
 
 type Save = { kind: "idle" } | { kind: "saving" } | { kind: "failed"; message: string };
@@ -25,6 +25,7 @@ export default function TutorialDetailScreen() {
     try {
       await apiRequest(`/api/tutorials/${encodeURIComponent(tutorial.tutId)}/complete`, { method: "POST" });
       set({ ...tutorial, completed: true });
+      void invalidate("/api/tutorials");
       setSave({ kind: "idle" });
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) await session.refresh();
