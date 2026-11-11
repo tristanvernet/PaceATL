@@ -24,8 +24,8 @@ export default function WelcomeScreen() {
         {ARCS.map((arc, i) => (
           <View
             key={i}
-            pointerEvents="none"
             style={{
+              pointerEvents: "none",
               position: "absolute",
               width: arc.size,
               height: arc.size,

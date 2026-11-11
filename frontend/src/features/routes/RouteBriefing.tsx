@@ -145,19 +145,9 @@ export function RouteBriefing({ routeId, hazards }: { routeId: number; hazards: 
       <Section icon="warning-outline" title="Reported hazards" lines={hazardLines} />
       {state.status === "ready" ? (
         <>
-          <Section
-            icon="leaf-outline"
-            title="Scenic highlights"
-            lines={
-              state.data.highlights.length
-                ? state.data.highlights
-                : [
-                    state.data.facts.highlights === null
-                      ? "Map highlights are unavailable right now."
-                      : "No named parks or landmarks nearby.",
-                  ]
-            }
-          />
+          {state.data.highlights.length ? (
+            <Section icon="leaf-outline" title="Scenic highlights" lines={state.data.highlights} />
+          ) : null}
           {state.data.tips.length ? (
             <Section icon="checkmark-circle-outline" title="Tips" lines={state.data.tips} />
           ) : null}
