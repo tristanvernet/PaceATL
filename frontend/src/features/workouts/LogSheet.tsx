@@ -40,8 +40,8 @@ const first = (value: string | string[] | undefined) => (Array.isArray(value) ? 
 export function LogSheet() {
   const c = useTheme();
   const { user, ready } = useSession();
-  // The toast needs the challenge as it was before this save. Reading it when
-  // the sheet opens keeps it off the save path and can never observe the save.
+  // Start the toast baseline when the sheet opens. A pending request may
+  // still observe the save, so completion detection is best effort.
   const before = useRef<Promise<Load<TodayChallenge>> | null>(null);
   useEffect(() => {
     if (user && challengeSnapshot().status !== "ready") before.current = refreshChallenge();
@@ -84,9 +84,10 @@ export function LogSheet() {
     setSaving(true);
     try {
       const snapshot = challengeSnapshot();
-      const prior = snapshot.status === "ready" ? snapshot : await (before.current ?? refreshChallenge());
+      const baseline = snapshot.status === "ready" ? snapshot : (before.current ?? refreshChallenge());
       const result = await apiRequest<LoggedWorkout>("/api/workouts", { method: "POST", body: JSON.stringify(values) });
       void invalidate("/api/workouts", "/api/rewards", "/api/fitness");
+      const prior = await baseline;
       const after = await refreshChallenge();
       showToast(savedToast(activity, isComplete(after) && !isComplete(prior), result.unlocked));
       close();
