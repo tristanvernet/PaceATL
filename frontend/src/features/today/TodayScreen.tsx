@@ -251,7 +251,7 @@ function NextBadge({ rewards }: { rewards: Rewards }) {
   const away = goal ? Math.max(0, goal.target - rewards.stats[goal.stat]) : null;
   return (
     <Tile
-     
+
       icon="ribbon-outline"
       title={`Next badge: ${next.name}`}
       subtitle={goal && away !== null ? `${formatNumber(away)} ${away === 1 && goal.unit === "workouts" ? "workout" : goal.unit} away` : next.description}
