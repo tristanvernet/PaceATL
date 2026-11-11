@@ -3,7 +3,7 @@ import { Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { apiRequest, errorMessage } from "../../api/client";
-import { invalidate } from "../../api/useResource";
+import { invalidate, useApi } from "../../api/useResource";
 import { RouteMap } from "../../components/RouteMap";
 import { EMPTY_SCENE, type MapMessage } from "../../components/routeMapBridge";
 import { Button, Field, Notice, useLeave } from "../../components/ui";
@@ -21,6 +21,7 @@ export default function BuildRouteScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, ready } = useSession();
+  const routes = useApi<SavedRoute[]>(user ? "/api/routes" : null);
   const leave = useLeave("/routes");
   const [points, setPoints] = useState<LatLng[]>([]);
   const [name, setName] = useState("");
@@ -39,7 +40,13 @@ export default function BuildRouteScreen() {
         method: "POST",
         body: JSON.stringify({ name: name.trim(), points }),
       });
-      // The detail screen finds the route in the saved list, so refresh it first.
+      // Keep the saved route available even if the list refresh fails.
+      routes.set([
+        route,
+        ...(routes.state.status === "ready"
+          ? routes.state.data.filter((saved) => saved.routeId !== route.routeId)
+          : []),
+      ]);
       await invalidate("/api/routes", "/api/fitness/sources");
       router.replace(`/routes/${route.routeId}`);
     } catch (e) {
