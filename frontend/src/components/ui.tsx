@@ -572,6 +572,46 @@ export function ListRow({
     </Pressable>
   );
 }
+export function Stats({ items, bordered = false }: { items: { value: string; label: string }[]; bordered?: boolean }) {
+  const c = useTheme();
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        marginVertical: 12,
+        ...(bordered && { borderWidth: 1, borderColor: c.border, borderRadius: 14 }),
+      }}
+    >
+      {items.map((item, i) => (
+        <View
+          key={item.label}
+          accessible
+          accessibilityLabel={`${item.value} ${item.label}`}
+          style={{
+            flex: 1,
+            ...(bordered && {
+              paddingVertical: 11,
+              paddingHorizontal: 12,
+              borderLeftWidth: i ? 1 : 0,
+              borderLeftColor: c.border,
+            }),
+          }}
+        >
+          <Text style={{
+            color: c.text,
+            fontSize: bordered ? 17 : 20,
+            fontWeight: "700",
+            ...(!bordered && { letterSpacing: -0.5, fontVariant: ["tabular-nums"] as const }),
+          }}>
+            {item.value}
+          </Text>
+          <Text style={{ color: c.muted, fontSize: 11 }}>{item.label}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 export const column = { maxWidth: 560, width: "100%", alignSelf: "center" } as const;
 const styles = StyleSheet.create({
   screen: { ...column, paddingHorizontal: 22, paddingTop: spacing.sm, paddingBottom: 36 },

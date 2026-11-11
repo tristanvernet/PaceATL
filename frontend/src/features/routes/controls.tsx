@@ -144,34 +144,3 @@ export function Sheet({ children }: PropsWithChildren) {
     </View>
   );
 }
-
-export function Stats({ items }: { items: { value: string; label: string }[] }) {
-  const c = useTheme();
-  return (
-    <View
-      style={{
-        flexDirection: "row",
-        borderWidth: 1,
-        borderColor: c.border,
-        borderRadius: 14,
-        marginVertical: 12,
-      }}
-    >
-      {items.map((item, i) => (
-        <View
-          key={item.label}
-          style={{
-            flex: 1,
-            paddingVertical: 11,
-            paddingHorizontal: 12,
-            borderLeftWidth: i ? 1 : 0,
-            borderLeftColor: c.border,
-          }}
-        >
-          <Text style={{ color: c.text, fontSize: 17, fontWeight: "700" }}>{item.value}</Text>
-          <Text style={{ color: c.muted, fontSize: 11 }}>{item.label}</Text>
-        </View>
-      ))}
-    </View>
-  );
-}

@@ -5,11 +5,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { apiRequest, errorMessage } from "../../api/client";
 import { RouteMap } from "../../components/RouteMap";
 import { EMPTY_SCENE, boundsOf, type MapScene } from "../../components/routeMapBridge";
-import { Button, Notice, column, useLeave } from "../../components/ui";
+import { Button, Notice, Stats, column, useLeave } from "../../components/ui";
 import { fonts, useTheme } from "../../theme";
 import { SignInPrompt } from "../../components/SignInPrompt";
 import { useSession } from "../auth/SessionProvider";
-import { RoundButton, Stats, passThrough } from "./controls";
+import { RoundButton, passThrough } from "./controls";
 import { metersToMiles } from "./geometry";
 import { RouteBriefing } from "./RouteBriefing";
 import { invalidate, useApi } from "../../api/useResource";
@@ -109,6 +109,7 @@ export default function RouteDetailScreen({ routeId }: { routeId: number }) {
           {route.name}
         </Text>
         <Stats
+          bordered
           items={[
             { value: miles(route.distanceMeters), label: "Distance" },
             ...(pace ? [{ value: `~${Math.round(pace * routeMiles)} min`, label: "At your pace" }] : []),

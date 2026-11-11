@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Text, View } from "react-native";
-import { SegmentedControl, Button } from "../../components/ui";
+import { SegmentedControl, Button, Stats } from "../../components/ui";
 import { useTheme } from "../../theme";
 import { useApi } from "../../api/useResource";
 
@@ -60,13 +60,13 @@ export function DashboardCard() {
           <Button title="Try again" secondary onPress={reload} />
         </View>
       ) : (
-        <Stats summary={state.status === "ready" ? state.data : null} bars={config.bars} />
+        <ActivitySummary summary={state.status === "ready" ? state.data : null} bars={config.bars} />
       )}
     </View>
   );
 }
 
-function Stats({ summary, bars }: { summary: Summary | null; bars: number }) {
+function ActivitySummary({ summary, bars }: { summary: Summary | null; bars: number }) {
   const c = useTheme();
   const days = summary ? lastDays(summary.daily, bars) : [];
   const max = Math.max(1, ...days.map((d) => d.minutes));
@@ -77,16 +77,7 @@ function Stats({ summary, bars }: { summary: Summary | null; bars: number }) {
   ];
   return (
     <>
-      <View style={{ flexDirection: "row", marginVertical: 12 }}>
-        {stats.map((s) => (
-          <View key={s.label} style={{ flex: 1 }} accessible accessibilityLabel={`${s.value} ${s.label}`}>
-            <Text style={{ color: c.text, fontSize: 20, fontWeight: "700", letterSpacing: -0.5, fontVariant: ["tabular-nums"] }}>
-              {s.value}
-            </Text>
-            <Text style={{ color: c.muted, fontSize: 11 }}>{s.label}</Text>
-          </View>
-        ))}
-      </View>
+      <Stats items={stats} />
       <View style={{ flexDirection: "row", gap: bars > 7 ? 4 : 6, alignItems: "flex-end", height: 56 }}>
         {(summary ? days : Array.from({ length: bars }, (_, i) => ({ date: String(i), letter: "", minutes: 0 }))).map((d) => (
           <View
