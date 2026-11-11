@@ -21,6 +21,8 @@ import { AiError } from "./ai/client.js";
 import { chatbotRouter } from "./features/chatbot/router.js";
 import { ChatbotError } from "./features/chatbot/service.js";
 import { adminRouter } from "./features/admin/router.js";
+import { challengesRouter } from "./features/challenges/router.js";
+import { hotspotsRouter } from "./features/hotspots/router.js";
 export const app = express();
 app.disable("x-powered-by");
 app.use("/api", (req, res, next) => {
@@ -55,6 +57,8 @@ app.use("/api/weather", weatherRouter);
 app.use("/api/reports", safetyRouter);   
 app.use("/api/chatbot", chatbotRouter);  
 app.use("/api/admin", adminRouter);
+app.use("/api/challenges", challengesRouter);
+app.use("/api/hotspots", hotspotsRouter);
 
 app.use("/api", (req, res) =>
   res
