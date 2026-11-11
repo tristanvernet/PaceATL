@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { apiRequest } from "../../api/client";
+import { apiRequest, errorMessage } from "../../api/client";
 import {
   BackButton,
   Button,
@@ -49,7 +49,7 @@ export function ReportScreen({ location, routeId }: { location: LatLng; routeId:
     } catch (e) {
       setSubmit({
         status: "error",
-        message: e instanceof Error ? e.message : "Could not submit the report. Try again.",
+        message: errorMessage(e, "Could not submit the report. Try again."),
       });
     }
   }

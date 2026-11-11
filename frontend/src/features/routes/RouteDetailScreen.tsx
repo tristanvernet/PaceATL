@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { apiRequest } from "../../api/client";
+import { apiRequest, errorMessage } from "../../api/client";
 import { RouteMap } from "../../components/RouteMap";
 import { EMPTY_SCENE } from "../../components/routeMapBridge";
 import { Button, Notice } from "../../components/ui";
@@ -30,8 +30,6 @@ type Body =
   | { kind: "message"; text: string; error: boolean }
   | { kind: "route"; route: SavedRoute };
 const HERO_HEIGHT = 250;
-const errorText = (error: unknown, fallback: string) =>
-  error instanceof Error ? error.message : fallback;
 
 export default function RouteDetailScreen({ routeId }: { routeId: number }) {
   const c = useTheme();
@@ -58,7 +56,7 @@ export default function RouteDetailScreen({ routeId }: { routeId: number }) {
       });
       setShare({ status: "shared" });
     } catch (e) {
-      setShare({ status: "error", message: errorText(e, "Could not share the route.") });
+      setShare({ status: "error", message: errorMessage(e, "Could not share the route.") });
     }
   }
   async function deleteRoute() {
@@ -67,7 +65,7 @@ export default function RouteDetailScreen({ routeId }: { routeId: number }) {
       await apiRequest(`/api/routes/${routeId}`, { method: "DELETE" });
       leave();
     } catch (e) {
-      setMenu({ status: "error", message: errorText(e, "Could not delete the route.") });
+      setMenu({ status: "error", message: errorMessage(e, "Could not delete the route.") });
     }
   }
 

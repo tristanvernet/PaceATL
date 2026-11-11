@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Platform, Pressable, ScrollView, Text, TextInput, View, type TextInputProps, type TextStyle } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { apiRequest } from "../../api/client";
+import { apiRequest, errorMessage } from "../../api/client";
 import { Button, Card, Field, Label, Notice, SegmentedControl } from "../../components/ui";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
@@ -12,7 +12,6 @@ import { NOTES_MAX, todayString, validateWorkout } from "./validation";
 import {
   ACTIVITIES,
   ACTIVITY_TYPES,
-  errorMessage,
   formatPace,
   isActivityType,
   type ActivityType,

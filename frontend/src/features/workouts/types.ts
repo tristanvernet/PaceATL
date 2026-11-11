@@ -32,5 +32,3 @@ export function formatPace(distanceMiles: number, durationMinutes: number) {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 export const formatMiles = (miles: number) => String(Number(miles.toFixed(2)));
-export const errorMessage = (e: unknown, fallback: string) =>
-  e instanceof Error ? e.message : fallback;

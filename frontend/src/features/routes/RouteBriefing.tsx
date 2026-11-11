@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { apiRequest } from "../../api/client";
+import { apiRequest, errorMessage } from "../../api/client";
 import { Button } from "../../components/ui";
 import { useTheme } from "../../theme";
 import type { Hazard } from "./types";
@@ -94,7 +94,7 @@ export function RouteBriefing({ routeId, hazards }: { routeId: number; hazards: 
         if (!controller.signal.aborted)
           setState({
             status: "error",
-            message: error instanceof Error ? error.message : "Could not prepare the briefing.",
+            message: errorMessage(error, "Could not prepare the briefing."),
           });
       });
     return () => controller.abort();

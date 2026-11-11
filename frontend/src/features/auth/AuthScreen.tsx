@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { validateAuth } from "./validation";
 import { Screen, Heading, BackButton, Field, Button, Notice } from "../../components/ui";
 import { useTheme } from "../../theme";
-import { apiRequest } from "../../api/client";
+import { apiRequest, errorMessage } from "../../api/client";
 import { useSession, type SignInResult } from "./SessionProvider";
 
 type Mode = "login" | "signup";
@@ -64,7 +64,7 @@ export default function AuthScreen({ mode }: { mode: Mode }) {
       setValues({ name: "", email: "", password: "", confirmPassword: "" });
       router.replace("/");
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "Unable to sign in.");
+      setNotice(errorMessage(e, "Unable to sign in."));
     } finally {
       setLoading(false);
     }

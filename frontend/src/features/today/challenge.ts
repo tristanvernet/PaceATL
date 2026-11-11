@@ -1,6 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { apiRequest } from "../../api/client";
-import { errorMessage } from "../workouts/types";
+import { apiRequest, errorMessage } from "../../api/client";
 import type { Load } from "../../api/useResource";
 
 export type ChallengeMetric = "miles" | "minutes" | "workouts";

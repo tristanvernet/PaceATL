@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Text, View } from "react-native";
 import { BackButton, Button, Heading, Notice, Screen } from "../../components/ui";
-import { apiRequest } from "../../api/client";
+import { apiRequest, errorMessage } from "../../api/client";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { useResource } from "../../api/useResource";
@@ -40,7 +40,7 @@ function Portal() {
       await apiRequest(url, { method: "PATCH", body: JSON.stringify(body) });
       reload();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong.");
+      setError(errorMessage(e, "Something went wrong."));
     } finally {
       setBusy(null);
     }

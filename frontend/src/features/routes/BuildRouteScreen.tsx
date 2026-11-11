@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { apiRequest } from "../../api/client";
+import { apiRequest, errorMessage } from "../../api/client";
 import { RouteMap } from "../../components/RouteMap";
 import { EMPTY_SCENE, type MapMessage } from "../../components/routeMapBridge";
 import { Button, Field, Notice } from "../../components/ui";
@@ -39,7 +39,7 @@ export default function BuildRouteScreen() {
     } catch (e) {
       setSave({
         status: "error",
-        message: e instanceof Error ? e.message : "Could not save the route.",
+        message: errorMessage(e, "Could not save the route."),
       });
     }
   }

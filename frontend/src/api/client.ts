@@ -1,6 +1,9 @@
 import { Platform } from "react-native";
 import { getSessionToken } from "../features/auth/session-storage";
 
+export const errorMessage = (e: unknown, fallback: string) =>
+  e instanceof Error ? e.message : fallback;
+
 export class ApiError extends Error {
   constructor(
     message: string,

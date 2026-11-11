@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { apiRequest } from "../../api/client";
+import { apiRequest, errorMessage } from "../../api/client";
 import { BackButton, Button, Field, Heading, Notice, Screen, SegmentedControl } from "../../components/ui";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
@@ -92,7 +92,7 @@ function Community() {
       setStatus({ kind: "done", message: "Shared with the community." });
       shares.reload();
     } catch (e) {
-      setStatus({ kind: "failed", message: e instanceof Error ? e.message : "Could not share." });
+      setStatus({ kind: "failed", message: errorMessage(e, "Could not share.") });
     }
   }
   async function remove(id: number) {
@@ -102,7 +102,7 @@ function Community() {
       if (shares.state.status === "ready") shares.set(shares.state.data.filter((s) => s.id !== id));
       setStatus({ kind: "done", message: "Share removed. The original item is kept." });
     } catch (e) {
-      setStatus({ kind: "failed", message: e instanceof Error ? e.message : "Could not remove share." });
+      setStatus({ kind: "failed", message: errorMessage(e, "Could not remove share.") });
     }
   }
 

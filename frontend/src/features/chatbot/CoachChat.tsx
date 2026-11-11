@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { apiRequest, ApiError } from "../../api/client";
+import { apiRequest, ApiError, errorMessage } from "../../api/client";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { SignInPrompt } from "../auth/SignInPrompt";
@@ -77,7 +77,7 @@ export function CoachChat() {
       setStatus({ kind: "idle" });
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) void session.refresh();
-      setStatus({ kind: "failed", message: e instanceof Error ? e.message : "The coach could not answer.", text });
+      setStatus({ kind: "failed", message: errorMessage(e, "The coach could not answer."), text });
     }
   }
   function send(raw: string) {

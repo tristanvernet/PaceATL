@@ -6,6 +6,7 @@ import { fonts, useTheme } from "../../theme";
 import { AppearanceSettings } from "../../features/appearance/AppearanceSettings";
 import { useSession, type User } from "../../features/auth/SessionProvider";
 import { useApi, type Load } from "../../api/useResource";
+import { errorMessage } from "../../api/client";
 import { SignInPrompt } from "../../features/auth/SignInPrompt";
 import { DashboardCard } from "../../features/fitness/DashboardCard";
 import type { Rewards } from "../../features/rewards/RewardsScreen";
@@ -134,7 +135,7 @@ function SignOutRow() {
       await session.signOut();
       setState({ kind: "idle" });
     } catch (e) {
-      setState({ kind: "failed", message: e instanceof Error ? e.message : "Unable to sign out." });
+      setState({ kind: "failed", message: errorMessage(e, "Unable to sign out.") });
     }
   }
   return (

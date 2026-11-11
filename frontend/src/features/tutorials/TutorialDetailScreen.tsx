@@ -3,7 +3,7 @@ import { Linking, Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Screen, Heading, BackButton, Button, Notice } from "../../components/ui";
-import { apiRequest, ApiError } from "../../api/client";
+import { apiRequest, ApiError, errorMessage } from "../../api/client";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { useApi } from "../../api/useResource";
@@ -28,7 +28,7 @@ export default function TutorialDetailScreen() {
       setSave({ kind: "idle" });
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) await session.refresh();
-      setSave({ kind: "failed", message: e instanceof Error ? e.message : "Unable to save completion." });
+      setSave({ kind: "failed", message: errorMessage(e, "Unable to save completion.") });
     }
   }
 

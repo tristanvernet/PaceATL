@@ -2,14 +2,14 @@ import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, type Href } from "expo-router";
-import { apiRequest } from "../../api/client";
+import { apiRequest, errorMessage } from "../../api/client";
 import { BackButton, Button, Card, Heading, Label, ListGroup, Notice, Screen } from "../../components/ui";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { refreshChallenge } from "../today/challenge";
 import { useApi } from "../../api/useResource";
 import { Toast } from "../today/Toast";
-import { ACTIVITIES, errorMessage, formatMiles, formatPace, type Workout } from "./types";
+import { ACTIVITIES, formatMiles, formatPace, type Workout } from "./types";
 import { todayString } from "./validation";
 
 function dayLabel(date: string) {

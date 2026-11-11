@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import { apiRequest } from "./client";
+import { apiRequest, errorMessage } from "./client";
 import { useSession } from "../features/auth/SessionProvider";
 
 export type Load<T> =
@@ -41,7 +41,7 @@ export function useResource<T>(key: string | null, load: Loader<T>) {
           // A failed background refresh keeps the data already on screen.
           current.scope === scope && current.state.status === "ready"
             ? current
-            : { scope, state: { status: "error", message: e instanceof Error ? e.message : "Something went wrong." } },
+            : { scope, state: { status: "error", message: errorMessage(e, "Something went wrong.") } },
         );
       });
     return () => controller.abort();
