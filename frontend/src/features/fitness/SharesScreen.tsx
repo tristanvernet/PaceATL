@@ -2,7 +2,19 @@ import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { apiRequest, errorMessage } from "../../api/client";
-import { Avatar, BackButton, Button, Field, Heading, ListGroup, Notice, Screen, SectionLabel, SegmentedControl } from "../../components/ui";
+import {
+  Avatar,
+  BackButton,
+  Button,
+  Field,
+  Heading,
+  ListGroup,
+  Loaded,
+  Notice,
+  Screen,
+  SectionLabel,
+  SegmentedControl,
+} from "../../components/ui";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { SignInPrompt } from "../../components/SignInPrompt";
@@ -41,12 +53,17 @@ const UNITS = [
 const DESCRIBE: Record<Kind, (s: Share) => string> = {
   goal: (s) => `Goal · ${s.target} ${s.unit}`,
   route: (s) => `Route · ${s.routeName} · ${miles(s.distanceMeters ?? 0)}`,
-  workout: (s) => `Workout · ${s.activityType} · ${s.distanceMiles} mi · ${s.durationMinutes} min`,
+  workout: (s) =>
+    `Workout · ${s.activityType} · ${s.distanceMiles} mi · ${s.durationMinutes} min`,
 };
 const sourceLabel = (s: Source) =>
   `${s.name[0]!.toUpperCase()}${s.name.slice(1)}${s.distanceMiles != null ? ` · ${s.distanceMiles} mi` : ""}`;
 
-type Status = { kind: "idle" } | { kind: "busy" } | { kind: "done"; message: string } | { kind: "failed"; message: string };
+type Status =
+  | { kind: "idle" }
+  | { kind: "busy" }
+  | { kind: "done"; message: string }
+  | { kind: "failed"; message: string };
 
 export default function SharesScreen() {
   const { ready, user } = useSession();
@@ -63,7 +80,10 @@ export default function SharesScreen() {
       ) : user ? (
         <Community />
       ) : (
-        <SignInPrompt title="Join the community" text="Sign in to see what others share and post your own progress." />
+        <SignInPrompt
+          title="Join the community"
+          text="Sign in to see what others share and post your own progress."
+        />
       )}
     </Screen>
   );
@@ -85,7 +105,13 @@ function Community() {
     try {
       await apiRequest("/api/fitness/shares", {
         method: "POST",
-        body: JSON.stringify({ kind, title, sourceId, target: target.trim() ? Number(target) : null, unit }),
+        body: JSON.stringify({
+          kind,
+          title,
+          sourceId,
+          target: target.trim() ? Number(target) : null,
+          unit,
+        }),
       });
       setTitle("");
       setTarget("");
@@ -93,28 +119,51 @@ function Community() {
       setStatus({ kind: "done", message: "Shared with the community." });
       void invalidate("/api/fitness/shares");
     } catch (e) {
-      setStatus({ kind: "failed", message: errorMessage(e, "Could not share.") });
+      setStatus({
+        kind: "failed",
+        message: errorMessage(e, "Could not share."),
+      });
     }
   }
   async function remove(id: number) {
     setStatus({ kind: "busy" });
     try {
       await apiRequest(`/api/fitness/shares/${id}`, { method: "DELETE" });
-      if (shares.state.status === "ready") shares.set(shares.state.data.filter((s) => s.id !== id));
+      if (shares.state.status === "ready")
+        shares.set(shares.state.data.filter((s) => s.id !== id));
       void invalidate("/api/fitness/shares");
-      setStatus({ kind: "done", message: "Share removed. The original item is kept." });
+      setStatus({
+        kind: "done",
+        message: "Share removed. The original item is kept.",
+      });
     } catch (e) {
-      setStatus({ kind: "failed", message: errorMessage(e, "Could not remove share.") });
+      setStatus({
+        kind: "failed",
+        message: errorMessage(e, "Could not remove share."),
+      });
     }
   }
 
   const busy = status.kind === "busy";
-  const choices = sources.state.status === "ready" ? sources.state.data[kind === "route" ? "routes" : "workouts"] : [];
+  const choices =
+    sources.state.status === "ready"
+      ? sources.state.data[kind === "route" ? "routes" : "workouts"]
+      : [];
 
   return (
     <>
       <SectionLabel>New share</SectionLabel>
-      <View style={{ backgroundColor: c.panel, borderWidth: 1, borderColor: c.border, borderRadius: 16, marginBottom: 14, padding: 14, gap: 14 }}>
+      <View
+        style={{
+          backgroundColor: c.panel,
+          borderWidth: 1,
+          borderColor: c.border,
+          borderRadius: 16,
+          marginBottom: 14,
+          padding: 14,
+          gap: 14,
+        }}
+      >
         <SegmentedControl
           label="What to share"
           options={KINDS}
@@ -124,7 +173,14 @@ function Community() {
             setSourceId(null);
           }}
         />
-        <Field label="Title" value={title} onChangeText={setTitle} maxLength={120} placeholder="Sunday long run" style={{ backgroundColor: c.background }} />
+        <Field
+          label="Title"
+          value={title}
+          onChangeText={setTitle}
+          maxLength={120}
+          placeholder="Sunday long run"
+          style={{ backgroundColor: c.background }}
+        />
         {kind === "goal" ? (
           <>
             <Field
@@ -135,16 +191,31 @@ function Community() {
               placeholder="20"
               style={{ backgroundColor: c.background }}
             />
-            <SegmentedControl label="Goal unit" options={UNITS} value={unit} onChange={setUnit} />
+            <SegmentedControl
+              label="Goal unit"
+              options={UNITS}
+              value={unit}
+              onChange={setUnit}
+            />
           </>
         ) : sources.state.status === "loading" ? (
           <Notice text="Loading your saved items…" />
         ) : sources.state.status === "error" ? (
           <Notice text={sources.state.message} error />
         ) : !choices.length ? (
-          <Notice text={kind === "route" ? "Save a route first to share it." : "Log a workout first to share it."} />
+          <Notice
+            text={
+              kind === "route"
+                ? "Save a route first to share it."
+                : "Log a workout first to share it."
+            }
+          />
         ) : (
-          <View accessibilityRole="radiogroup" accessibilityLabel={`Choose a ${kind}`} style={{ gap: 6 }}>
+          <View
+            accessibilityRole="radiogroup"
+            accessibilityLabel={`Choose a ${kind}`}
+            style={{ gap: 6 }}
+          >
             {choices.map((item) => {
               const on = sourceId === item.id;
               return (
@@ -169,7 +240,11 @@ function Community() {
                     size={18}
                     color={on ? c.primary : c.muted}
                   />
-                  <Text style={{ color: c.text, fontSize: 14, fontWeight: "600" }}>{sourceLabel(item)}</Text>
+                  <Text
+                    style={{ color: c.text, fontSize: 14, fontWeight: "600" }}
+                  >
+                    {sourceLabel(item)}
+                  </Text>
                 </Pressable>
               );
             })}
@@ -178,7 +253,9 @@ function Community() {
         <Button
           title="Publish"
           loading={busy}
-          disabled={!title.trim() || (kind === "goal" ? !target.trim() : !sourceId)}
+          disabled={
+            !title.trim() || (kind === "goal" ? !target.trim() : !sourceId)
+          }
           onPress={() => void publish()}
         />
       </View>
@@ -187,41 +264,61 @@ function Community() {
       )}
 
       <SectionLabel>Community feed</SectionLabel>
-      {shares.state.status === "loading" ? (
-        <Notice text="Loading shares…" />
-      ) : shares.state.status === "error" ? (
-        <>
-          <Notice text={shares.state.message} error />
-          <Button title="Try again" secondary onPress={shares.reload} />
-        </>
-      ) : !shares.state.data.length ? (
-        <Notice text="No one has shared anything yet. Be the first." />
-      ) : (
-        <ListGroup>
-          {shares.state.data.map((s) => (
-            <View key={s.id} style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 12 }}>
-              <Avatar name={s.author} />
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={{ color: c.text, fontSize: 14, fontWeight: "600" }}>{s.title}</Text>
-                <Text style={{ color: c.muted, fontSize: 12 }}>
-                  {s.isOwner ? "You" : s.author} · {DESCRIBE[s.kind](s)}
-                </Text>
-              </View>
-              {s.isOwner && (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Remove ${s.title}`}
-                  disabled={busy}
-                  onPress={() => void remove(s.id)}
-                  style={({ pressed }) => ({ padding: 6, opacity: busy ? 0.4 : pressed ? 0.6 : 1 })}
+      <Loaded
+        state={shares.state}
+        reload={shares.reload}
+        loading="Loading shares…"
+      >
+        {(data) =>
+          !data.length ? (
+            <Notice text="No one has shared anything yet. Be the first." />
+          ) : (
+            <ListGroup>
+              {data.map((s) => (
+                <View
+                  key={s.id}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: 12,
+                  }}
                 >
-                  <Ionicons name="trash-outline" size={18} color={c.muted} />
-                </Pressable>
-              )}
-            </View>
-          ))}
-        </ListGroup>
-      )}
+                  <Avatar name={s.author} />
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text
+                      style={{ color: c.text, fontSize: 14, fontWeight: "600" }}
+                    >
+                      {s.title}
+                    </Text>
+                    <Text style={{ color: c.muted, fontSize: 12 }}>
+                      {s.isOwner ? "You" : s.author} · {DESCRIBE[s.kind](s)}
+                    </Text>
+                  </View>
+                  {s.isOwner && (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Remove ${s.title}`}
+                      disabled={busy}
+                      onPress={() => void remove(s.id)}
+                      style={({ pressed }) => ({
+                        padding: 6,
+                        opacity: busy ? 0.4 : pressed ? 0.6 : 1,
+                      })}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={18}
+                        color={c.muted}
+                      />
+                    </Pressable>
+                  )}
+                </View>
+              ))}
+            </ListGroup>
+          )
+        }
+      </Loaded>
     </>
   );
 }

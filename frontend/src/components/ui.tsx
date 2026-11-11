@@ -16,6 +16,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter, type Href } from "expo-router";
 import { fonts, spacing, useTheme } from "../theme";
 
+import type { Load } from "../api/useResource";
+
 type IconName = keyof typeof Ionicons.glyphMap;
 
 export function Screen({ children }: PropsWithChildren) {
@@ -261,6 +263,28 @@ export function Notice({
     </View>
   );
 }
+export function Loaded<T>({
+  state,
+  reload,
+  loading,
+  children,
+}: {
+  state: Load<T>;
+  reload: () => void;
+  loading: string;
+  children: (data: T) => ReactNode;
+}) {
+  if (state.status === "loading") return <Notice text={loading} />;
+  if (state.status === "error")
+    return (
+      <>
+        <Notice text={state.message} error />
+        <Button title="Try again" secondary onPress={reload} />
+      </>
+    );
+  return children(state.data);
+}
+
 // The focus underline replaces the browser outline, which RN types do not expose.
 const noWebOutline = (Platform.OS === "web" ? { outlineStyle: "none" } : null) as TextStyle | null;
 
