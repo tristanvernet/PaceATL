@@ -45,6 +45,8 @@ function Markdown({ text }: { text: string }) {
   );
 }
 
+const bubble = { paddingVertical: 11, paddingHorizontal: 14, borderRadius: 18, borderBottomLeftRadius: 6 } as const;
+
 export function CoachChat() {
   const c = useTheme();
   const session = useSession();
@@ -95,6 +97,7 @@ export function CoachChat() {
   }
 
   const sending = status.kind === "sending";
+  const canSend = !!input.trim() && !sending;
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -116,9 +119,7 @@ export function CoachChat() {
               style={{
                 alignSelf: mine ? "flex-end" : "flex-start",
                 maxWidth: "82%",
-                paddingVertical: 11,
-                paddingHorizontal: 14,
-                borderRadius: 18,
+                ...bubble,
                 borderBottomRightRadius: mine ? 6 : 18,
                 borderBottomLeftRadius: mine ? 18 : 6,
                 backgroundColor: mine ? c.hero : c.panel,
@@ -140,10 +141,7 @@ export function CoachChat() {
               flexDirection: "row",
               gap: 8,
               alignItems: "center",
-              paddingVertical: 11,
-              paddingHorizontal: 14,
-              borderRadius: 18,
-              borderBottomLeftRadius: 6,
+              ...bubble,
               backgroundColor: c.panel,
               borderWidth: 1,
               borderColor: c.border,
@@ -160,10 +158,7 @@ export function CoachChat() {
               alignSelf: "flex-start",
               maxWidth: "82%",
               gap: 8,
-              paddingVertical: 11,
-              paddingHorizontal: 14,
-              borderRadius: 18,
-              borderBottomLeftRadius: 6,
+              ...bubble,
               backgroundColor: c.soft,
             }}
           >
@@ -232,7 +227,7 @@ export function CoachChat() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Send"
-          disabled={sending || !input.trim()}
+          disabled={!canSend}
           onPress={() => send(input)}
           style={{
             width: 36,
@@ -240,10 +235,10 @@ export function CoachChat() {
             borderRadius: 18,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: input.trim() && !sending ? c.primary : c.soft,
+            backgroundColor: canSend ? c.primary : c.soft,
           }}
         >
-          <Ionicons name="arrow-up" size={18} color={input.trim() && !sending ? c.onPrimary : c.muted} />
+          <Ionicons name="arrow-up" size={18} color={canSend ? c.onPrimary : c.muted} />
         </Pressable>
       </View>
     </KeyboardAvoidingView>

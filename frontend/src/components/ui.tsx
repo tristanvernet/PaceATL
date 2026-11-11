@@ -401,6 +401,25 @@ export function BackButton() {
     </Pressable>
   );
 }
+const SEGMENT_SIZES = {
+  compact: {
+    container: { padding: 3, borderRadius: 10, borderWidth: 0 },
+    option: { flex: undefined, paddingVertical: 5, paddingHorizontal: 9, borderRadius: 8 },
+    fontSize: 12,
+    background: "background",
+    selected: "panel",
+    selectedText: "text",
+  },
+  regular: {
+    container: { padding: 4, borderRadius: 12, borderWidth: 1 },
+    option: { flex: 1, paddingVertical: 9, paddingHorizontal: 4, borderRadius: 9 },
+    fontSize: 13,
+    background: "panel",
+    selected: "primary",
+    selectedText: "onPrimary",
+  },
+} as const;
+
 export function SegmentedControl<T extends string>({
   options,
   value,
@@ -415,16 +434,15 @@ export function SegmentedControl<T extends string>({
   label?: string;
 }) {
   const c = useTheme();
+  const size = SEGMENT_SIZES[compact ? "compact" : "regular"];
   return (
     <View
       accessibilityRole="radiogroup"
       accessibilityLabel={label}
       style={{
         flexDirection: "row",
-        padding: compact ? 3 : 4,
-        borderRadius: compact ? 10 : 12,
-        backgroundColor: compact ? c.background : c.panel,
-        borderWidth: compact ? 0 : 1,
+        ...size.container,
+        backgroundColor: c[size.background],
         borderColor: c.border,
       }}
     >
@@ -437,19 +455,16 @@ export function SegmentedControl<T extends string>({
             aria-checked={on}
             onPress={() => onChange(option.value)}
             style={{
-              flex: compact ? undefined : 1,
+              ...size.option,
               alignItems: "center",
-              paddingVertical: compact ? 5 : 9,
-              paddingHorizontal: compact ? 9 : 4,
-              borderRadius: compact ? 8 : 9,
-              backgroundColor: on ? (compact ? c.panel : c.primary) : "transparent",
+              backgroundColor: on ? c[size.selected] : "transparent",
             }}
           >
             <Text
               style={{
-                fontSize: compact ? 12 : 13,
+                fontSize: size.fontSize,
                 fontWeight: "600",
-                color: on ? (compact ? c.text : c.onPrimary) : c.muted,
+                color: on ? c[size.selectedText] : c.muted,
               }}
             >
               {option.label}

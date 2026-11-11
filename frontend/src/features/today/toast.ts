@@ -39,13 +39,8 @@ export function savedToast(
   unlocked: UnlockedBadge[],
 ): Omit<Toast, "id"> {
   const noun = ACTIVITIES[activity].noun;
-  if (challengeCompleted)
-    return {
-      title: "Challenge complete.",
-      detail: unlocked.length ? `You also earned ${quoted(unlocked)}.` : undefined,
-    };
   return {
-    title: `${noun[0].toUpperCase()}${noun.slice(1)} saved.`,
-    detail: unlocked.length ? `You earned ${quoted(unlocked)}.` : undefined,
+    title: challengeCompleted ? "Challenge complete." : `${noun[0].toUpperCase()}${noun.slice(1)} saved.`,
+    detail: unlocked.length ? `You ${challengeCompleted ? "also " : ""}earned ${quoted(unlocked)}.` : undefined,
   };
 }
