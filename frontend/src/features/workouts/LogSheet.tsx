@@ -3,7 +3,7 @@ import { Platform, Pressable, ScrollView, Text, TextInput, View, type TextInputP
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { apiRequest, errorMessage } from "../../api/client";
-import { Button, Card, Field, Label, Notice, SegmentedControl } from "../../components/ui";
+import { Button, Card, Field, Label, Notice, SegmentedControl, column } from "../../components/ui";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { challengeSnapshot, isComplete, refreshChallenge } from "../today/challenge";
@@ -100,7 +100,7 @@ export function LogSheet() {
       </View>
       <ScrollView
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36, maxWidth: 560, width: "100%", alignSelf: "center" }}
+        contentContainerStyle={[column, { paddingHorizontal: 20, paddingBottom: 36 }]}
       >
         {!ready ? null : !user ? (
           <Card>

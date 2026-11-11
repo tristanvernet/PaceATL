@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { apiRequest, errorMessage } from "../../api/client";
 import { RouteMap } from "../../components/RouteMap";
 import { EMPTY_SCENE } from "../../components/routeMapBridge";
-import { Button, Notice } from "../../components/ui";
+import { Button, Notice, column } from "../../components/ui";
 import { fonts, useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { RoundButton, Stats, passThrough } from "./controls";
@@ -111,15 +111,7 @@ export default function RouteDetailScreen({ routeId }: { routeId: number }) {
             />
           ) : null}
         </View>
-        <View
-          style={{
-            paddingHorizontal: 22,
-            paddingTop: 16,
-            maxWidth: 560,
-            width: "100%",
-            alignSelf: "center",
-          }}
-        >
+        <View style={[column, { paddingHorizontal: 22, paddingTop: 16 }]}>
           {body.kind === "signedOut" ? (
             <View style={{ gap: 10 }}>
               <Text style={{ color: c.text, fontSize: 15 }}>Sign in to see your saved routes.</Text>

@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { apiRequest, ApiError, errorMessage } from "../../api/client";
+import { column } from "../../components/ui";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { SignInPrompt } from "../auth/SignInPrompt";
@@ -102,7 +103,7 @@ export function CoachChat() {
       <ScrollView
         ref={scroll}
         style={{ flex: 1 }}
-        contentContainerStyle={{ padding: 14, gap: 10, maxWidth: 560, width: "100%", alignSelf: "center" }}
+        contentContainerStyle={[column, { padding: 14, gap: 10 }]}
         onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}
         keyboardShouldPersistTaps="handled"
       >

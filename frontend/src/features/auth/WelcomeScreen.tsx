@@ -1,6 +1,7 @@
 import { Pressable, Text, View } from "react-native";
 import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { column } from "../../components/ui";
 import { fonts, useTheme } from "../../theme";
 import { HeroButton } from "./HeroButton";
 import { useSession } from "./SessionProvider";
@@ -42,7 +43,7 @@ export default function WelcomeScreen() {
           />
         ))}
       </View>
-      <View style={{ paddingHorizontal: 24, paddingBottom: 30, maxWidth: 560, width: "100%", alignSelf: "center" }}>
+      <View style={[column, { paddingHorizontal: 24, paddingBottom: 30 }]}>
         <Text style={{ color: c.heroAccent, fontSize: 12, fontWeight: "700", letterSpacing: 1.2 }}>
           PACEATL
         </Text>

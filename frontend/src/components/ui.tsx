@@ -387,30 +387,7 @@ export function ListRow({
     </Pressable>
   );
 }
-export function Placeholder({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  return (
-    <>
-      <Card>
-        <Label>{title}</Label>
-        <Label secondary>{description}</Label>
-      </Card>
-      <Notice text="Feature placeholder only. No information is saved or submitted." />
-    </>
-  );
-}
+export const column = { maxWidth: 560, width: "100%", alignSelf: "center" } as const;
 const styles = StyleSheet.create({
-  screen: {
-    paddingHorizontal: 22,
-    paddingTop: spacing.sm,
-    paddingBottom: 36,
-    maxWidth: 560,
-    width: "100%",
-    alignSelf: "center",
-  },
+  screen: { ...column, paddingHorizontal: 22, paddingTop: spacing.sm, paddingBottom: 36 },
 });

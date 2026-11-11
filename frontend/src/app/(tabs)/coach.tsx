@@ -1,7 +1,7 @@
 import { ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { SegmentedControl } from "../../components/ui";
+import { SegmentedControl, column } from "../../components/ui";
 import { useTheme } from "../../theme";
 import { CoachChat } from "../../features/chatbot/CoachChat";
 import { TutorialLibrary } from "../../features/tutorials/TutorialLibrary";
@@ -10,7 +10,6 @@ const VIEWS = [
   { value: "chat", label: "Chat" },
   { value: "library", label: "Library" },
 ] as const;
-const column = { maxWidth: 560, width: "100%", alignSelf: "center" } as const;
 
 export default function CoachScreen() {
   const c = useTheme();
