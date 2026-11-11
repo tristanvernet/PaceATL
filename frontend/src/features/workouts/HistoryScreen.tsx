@@ -7,7 +7,7 @@ import { BackButton, Button, Card, Heading, Label, ListGroup, Notice, Screen } f
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { refreshChallenge } from "../today/challenge";
-import { useApi } from "../today/load";
+import { useApi } from "../../api/useResource";
 import { Toast } from "../today/Toast";
 import { ACTIVITIES, errorMessage, formatMiles, formatPace, type Workout } from "./types";
 import { todayString } from "./validation";
@@ -23,7 +23,7 @@ export function HistoryScreen() {
   const c = useTheme();
   const router = useRouter();
   const { user, ready } = useSession();
-  const load = useApi<Workout[]>(ready && user ? "/api/workouts" : null, "Could not load your activity.");
+  const load = useApi<Workout[]>(ready && user ? "/api/workouts" : null).state;
   const [deleted, setDeleted] = useState<Set<number>>(new Set());
   const [confirming, setConfirming] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);

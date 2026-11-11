@@ -8,7 +8,7 @@ import { useSession } from "../auth/SessionProvider";
 import { todayString } from "../workouts/validation";
 import { ACTIVITIES, isActivityType, type Workout } from "../workouts/types";
 import { refreshChallenge, resetChallenge, useChallenge, type ChallengeMetric, type TodayChallenge } from "./challenge";
-import { useApi, type Load } from "./load";
+import { useApi, type Load } from "../../api/useResource";
 import { Toast } from "./Toast";
 
 type Weather = { temperature: number; humidity: number; wind: number; aqi: number | null };
@@ -55,10 +55,10 @@ export function TodayScreen() {
   const now = new Date();
   const date = `${now.toLocaleDateString("en-US", { weekday: "long" })} · ${now.toLocaleDateString("en-US", { month: "long", day: "numeric" })}`;
   const name = user?.name.trim().split(/\s+/)[0];
-  const weather = useApi<Weather>("/api/weather", "Weather unavailable.");
-  const workouts = useApi<Workout[]>(signedIn ? "/api/workouts" : null, "Could not load your workouts.");
-  const rewards = useApi<Rewards>(signedIn ? "/api/rewards" : null, "Could not load badges.");
-  const posts = useApi<Post[]>(signedIn ? "/api/fitness/shares" : null, "Could not load community posts.");
+  const weather = useApi<Weather>("/api/weather").state;
+  const workouts = useApi<Workout[]>(signedIn ? "/api/workouts" : null).state;
+  const rewards = useApi<Rewards>(signedIn ? "/api/rewards" : null).state;
+  const posts = useApi<Post[]>(signedIn ? "/api/fitness/shares" : null).state;
   const challenge = useChallenge();
   useEffect(() => {
     if (!signedIn) resetChallenge();

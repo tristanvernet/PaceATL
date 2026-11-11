@@ -6,7 +6,7 @@ import { BackButton, Button, Field, Heading, Notice, Screen, SegmentedControl } 
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { SignInPrompt } from "../auth/SignInPrompt";
-import { useApi } from "../auth/useResource";
+import { useApi } from "../../api/useResource";
 
 type Kind = "route" | "workout" | "goal";
 type Unit = "miles" | "minutes" | "workouts";

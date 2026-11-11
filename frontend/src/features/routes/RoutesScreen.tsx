@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { RouteMap } from "../../components/RouteMap";
@@ -11,7 +11,7 @@ import { useSession } from "../auth/SessionProvider";
 import { categoryLabel } from "../reports/categories";
 import { FloatingButton, LayerChip, RoundButton, Sheet, passThrough } from "./controls";
 import { RouteShape } from "./RouteShape";
-import { useLoad } from "./useLoad";
+import { useApi, type Load } from "../../api/useResource";
 import {
   ATLANTA,
   miles,
@@ -19,7 +19,6 @@ import {
   type Hazard,
   type Hotspot,
   type HotspotResult,
-  type Load,
   type SavedRoute,
 } from "./types";
 import type { LatLng } from "./geometry";
@@ -66,7 +65,7 @@ function resolve(
   const hazard = hazards.find((h) => h.id === selection.id);
   return hazard ? { kind: "hazard", hazard } : null;
 }
-const valueOf = <T,>(load: Load<T>, empty: T) => (load.status === "ready" ? load.value : empty);
+const valueOf = <T,>(load: Load<T>, empty: T) => (load.status === "ready" ? load.data : empty);
 const settled = (load: Load<unknown>) => load.status !== "loading";
 
 export default function RoutesScreen() {
@@ -80,15 +79,13 @@ export default function RoutesScreen() {
     hazards: true,
   });
   const [selection, setSelection] = useState<Selection | null>(null);
-  const [attempt, setAttempt] = useState(0);
   const [bottomHeight, setBottomHeight] = useState(0);
   const center = useRef<LatLng>(ATLANTA);
-  // Coming back from build or delete must show the current list.
-  useFocusEffect(useCallback(() => setAttempt((n) => n + 1), []));
 
-  const routesLoad = useLoad<SavedRoute[]>(user ? "/api/routes" : null, attempt);
-  const hotspotsLoad = useLoad<HotspotResult>("/api/hotspots");
-  const hazardsLoad = useLoad<Hazard[]>("/api/reports/approved");
+  const savedRoutes = useApi<SavedRoute[]>(user ? "/api/routes" : null);
+  const routesLoad = savedRoutes.state;
+  const hotspotsLoad = useApi<HotspotResult>("/api/hotspots").state;
+  const hazardsLoad = useApi<Hazard[]>("/api/reports/approved").state;
   const routes = user ? valueOf(routesLoad, []) : [];
   const hotspots = valueOf(hotspotsLoad, null)?.hotspots ?? [];
   const hazards = valueOf(hazardsLoad, []);
@@ -255,7 +252,7 @@ export default function RoutesScreen() {
           ) : routesLoad.status === "error" ? (
             <>
               <Notice text={routesLoad.message} error />
-              <Button title="Try again" secondary onPress={() => setAttempt((n) => n + 1)} />
+              <Button title="Try again" secondary onPress={savedRoutes.reload} />
             </>
           ) : routes.length === 0 ? (
             <View style={{ paddingVertical: 6, gap: 4 }}>

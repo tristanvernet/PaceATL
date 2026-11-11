@@ -6,7 +6,7 @@ import { Screen, Heading, BackButton, Button, Notice } from "../../components/ui
 import { apiRequest, ApiError } from "../../api/client";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
-import { useApi } from "../auth/useResource";
+import { useApi } from "../../api/useResource";
 import type { Tutorial } from "./types";
 
 type Save = { kind: "idle" } | { kind: "saving" } | { kind: "failed"; message: string };

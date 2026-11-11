@@ -5,7 +5,7 @@ import { Screen, ListGroup, ListRow, Notice, Button } from "../../components/ui"
 import { fonts, useTheme } from "../../theme";
 import { AppearanceSettings } from "../../features/appearance/AppearanceSettings";
 import { useSession, type User } from "../../features/auth/SessionProvider";
-import { useApi, type Resource } from "../../features/auth/useResource";
+import { useApi, type Load } from "../../api/useResource";
 import { SignInPrompt } from "../../features/auth/SignInPrompt";
 import { DashboardCard } from "../../features/fitness/DashboardCard";
 import type { Rewards } from "../../features/rewards/RewardsScreen";
@@ -18,7 +18,7 @@ const initials = (name: string) =>
     .slice(0, 2)
     .map((part) => part[0]!.toUpperCase())
     .join("");
-const detail = <T,>(state: Resource<T>, format: (data: T) => string) =>
+const detail = <T,>(state: Load<T>, format: (data: T) => string) =>
   state.status === "ready" ? format(state.data) : undefined;
 
 export default function YouScreen() {

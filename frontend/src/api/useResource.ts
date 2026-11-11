@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import { apiRequest } from "../../api/client";
-import { useSession } from "./SessionProvider";
+import { apiRequest } from "./client";
+import { useSession } from "../features/auth/SessionProvider";
 
-export type Resource<T> =
+export type Load<T> =
   | { status: "loading" }
   | { status: "error"; message: string }
   | { status: "ready"; data: T };
@@ -16,7 +16,7 @@ type Loader<T> = (signal: AbortSignal) => Promise<T>;
 export function useResource<T>(key: string | null, load: Loader<T>) {
   const { ready, user } = useSession();
   const scope = ready && key !== null ? `${user?.id ?? "anon"}:${key}` : null;
-  const [entry, setEntry] = useState<{ scope: string | null; state: Resource<T> }>({
+  const [entry, setEntry] = useState<{ scope: string | null; state: Load<T> }>({
     scope,
     state: { status: "loading" },
   });
@@ -24,7 +24,7 @@ export function useResource<T>(key: string | null, load: Loader<T>) {
   const loadRef = useRef(load);
   loadRef.current = load;
 
-  const state: Resource<T> = entry.scope === scope ? entry.state : { status: "loading" };
+  const state: Load<T> = entry.scope === scope ? entry.state : { status: "loading" };
 
   useEffect(() => {
     if (scope === null) return;

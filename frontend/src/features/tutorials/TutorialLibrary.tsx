@@ -6,7 +6,7 @@ import { Button, Notice } from "../../components/ui";
 import { apiRequest } from "../../api/client";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
-import { useResource } from "../auth/useResource";
+import { useResource } from "../../api/useResource";
 import { categoryIcon, type Tutorial, type TutorialSummary } from "./types";
 
 type Library = { tutorials: TutorialSummary[]; completed: Set<string> | null };

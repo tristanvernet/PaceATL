@@ -11,7 +11,7 @@ import { useSession } from "../auth/SessionProvider";
 import { RoundButton, Stats, passThrough } from "./controls";
 import { metersToMiles } from "./geometry";
 import { RouteBriefing } from "./RouteBriefing";
-import { useLoad } from "./useLoad";
+import { useApi } from "../../api/useResource";
 import {
   averagePace,
   hazardsNear,
@@ -38,16 +38,16 @@ export default function RouteDetailScreen({ routeId }: { routeId: number }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, ready } = useSession();
-  const routes = useLoad<SavedRoute[]>(user ? "/api/routes" : null);
-  const workouts = useLoad<Workout[]>(user ? "/api/workouts" : null);
-  const reports = useLoad<Hazard[]>("/api/reports/approved");
+  const routes = useApi<SavedRoute[]>(user ? "/api/routes" : null).state;
+  const workouts = useApi<Workout[]>(user ? "/api/workouts" : null).state;
+  const reports = useApi<Hazard[]>("/api/reports/approved").state;
   const [share, setShare] = useState<Share>({ status: "idle" });
   const [menu, setMenu] = useState<Menu>({ status: "closed" });
 
   const leave = () => (router.canGoBack() ? router.back() : router.replace("/routes"));
   const route =
-    routes.status === "ready" ? routes.value.find((r) => r.routeId === routeId) : undefined;
-  const hazards = route && reports.status === "ready" ? hazardsNear(route, reports.value) : [];
+    routes.status === "ready" ? routes.data.find((r) => r.routeId === routeId) : undefined;
+  const hazards = route && reports.status === "ready" ? hazardsNear(route, reports.data) : [];
 
   async function shareRoute(route: SavedRoute) {
     setShare({ status: "sending" });
@@ -87,7 +87,7 @@ export default function RouteDetailScreen({ routeId }: { routeId: number }) {
               }
             : { kind: "route", route };
 
-  const pace = workouts.status === "ready" ? averagePace(workouts.value) : null;
+  const pace = workouts.status === "ready" ? averagePace(workouts.data) : null;
   const routeMiles = route ? metersToMiles(route.distanceMeters) : 0;
 
   return (

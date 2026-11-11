@@ -4,7 +4,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { apiRequest } from "../../api/client";
 import { Button } from "../../components/ui";
 import { useTheme } from "../../theme";
-import type { Hazard, Load } from "./types";
+import type { Hazard } from "./types";
+import type { Load } from "../../api/useResource";
 
 type Briefing = {
   routeId: number;
@@ -87,7 +88,7 @@ export function RouteBriefing({ routeId, hazards }: { routeId: number; hazards: 
       timeoutMs: 60000,
     })
       .then((value) => {
-        if (!controller.signal.aborted) setState({ status: "ready", value });
+        if (!controller.signal.aborted) setState({ status: "ready", data: value });
       })
       .catch((error) => {
         if (!controller.signal.aborted)
@@ -101,8 +102,8 @@ export function RouteBriefing({ routeId, hazards }: { routeId: number; hazards: 
 
   const hazardLines = hazards.length
     ? hazards.map((h) => (h.description ? `${h.title}. ${h.description}` : h.title))
-    : state.status === "ready" && state.value.hazards.length
-      ? state.value.hazards
+    : state.status === "ready" && state.data.hazards.length
+      ? state.data.hazards
       : ["No hazards have been reported near this route."];
 
   return (
@@ -129,15 +130,15 @@ export function RouteBriefing({ routeId, hazards }: { routeId: number; hazards: 
       ) : (
         <>
           <Text style={{ color: c.text, fontSize: 13, lineHeight: 19, marginTop: 6 }}>
-            {state.value.summary}
+            {state.data.summary}
           </Text>
           <Section
             icon="partly-sunny-outline"
             title="Conditions"
-            lines={[conditions(state.value)]}
+            lines={[conditions(state.data)]}
           />
-          {state.value.terrain ? (
-            <Section icon="trending-up-outline" title="Terrain" lines={[state.value.terrain]} />
+          {state.data.terrain ? (
+            <Section icon="trending-up-outline" title="Terrain" lines={[state.data.terrain]} />
           ) : null}
         </>
       )}
@@ -148,20 +149,20 @@ export function RouteBriefing({ routeId, hazards }: { routeId: number; hazards: 
             icon="leaf-outline"
             title="Scenic highlights"
             lines={
-              state.value.highlights.length
-                ? state.value.highlights
+              state.data.highlights.length
+                ? state.data.highlights
                 : [
-                    state.value.facts.highlights === null
+                    state.data.facts.highlights === null
                       ? "Map highlights are unavailable right now."
                       : "No named parks or landmarks nearby.",
                   ]
             }
           />
-          {state.value.tips.length ? (
-            <Section icon="checkmark-circle-outline" title="Tips" lines={state.value.tips} />
+          {state.data.tips.length ? (
+            <Section icon="checkmark-circle-outline" title="Tips" lines={state.data.tips} />
           ) : null}
           <Text style={{ color: c.muted, fontSize: 11, lineHeight: 16, marginTop: 12 }}>
-            AI-generated at {updatedAt(state.value)} from map, elevation and weather data. Check
+            AI-generated at {updatedAt(state.data)} from map, elevation and weather data. Check
             conditions yourself before heading out.
           </Text>
         </>

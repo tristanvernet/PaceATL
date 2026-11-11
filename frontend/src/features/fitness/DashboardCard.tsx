@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Text, View } from "react-native";
 import { SegmentedControl, Button } from "../../components/ui";
 import { useTheme } from "../../theme";
-import { useApi } from "../auth/useResource";
+import { useApi } from "../../api/useResource";
 
 type Summary = {
   activities: number;

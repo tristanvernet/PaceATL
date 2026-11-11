@@ -4,7 +4,7 @@ import { BackButton, Button, Heading, Notice, Screen } from "../../components/ui
 import { apiRequest } from "../../api/client";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
-import { useResource } from "../auth/useResource";
+import { useResource } from "../../api/useResource";
 
 type Person = { id: number; name: string; email: string; role: string; status: string };
 type Report = { id: number; title: string; category: string; description: string | null; reporter: string | null };

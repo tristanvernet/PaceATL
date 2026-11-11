@@ -4,7 +4,7 @@ import { BackButton, Button, Heading, Notice, Screen } from "../../components/ui
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { SignInPrompt } from "../auth/SignInPrompt";
-import { useApi } from "../auth/useResource";
+import { useApi } from "../../api/useResource";
 
 type Achievement = { key: string; name: string; description: string; icon: string; unlocked: boolean; earnedAt: string | null };
 export type Rewards = {

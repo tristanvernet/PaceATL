@@ -32,9 +32,6 @@ export type Hazard = {
 };
 export type Workout = { distanceMiles: number; durationMinutes: number };
 
-export type Load<T> =
-  { status: "loading" } | { status: "error"; message: string } | { status: "ready"; value: T };
-
 export const ATLANTA: LatLng = { latitude: 33.765, longitude: -84.37 };
 
 export const miles = (meters: number) => `${metersToMiles(meters).toFixed(1)} mi`;
