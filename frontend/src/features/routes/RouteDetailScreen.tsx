@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -26,10 +26,6 @@ import {
 type Share = { status: "idle" | "sending" | "shared" } | { status: "error"; message: string };
 type Menu =
   { status: "closed" | "open" | "confirm" | "deleting" } | { status: "error"; message: string };
-type Body =
-  | { kind: "signedOut" }
-  | { kind: "message"; text: string; error: boolean }
-  | { kind: "route"; route: SavedRoute };
 const HERO_HEIGHT = 250;
 const NO_HAZARDS: Hazard[] = [];
 
@@ -92,24 +88,56 @@ export default function RouteDetailScreen({ routeId }: { routeId: number }) {
     }
   }
 
-  const body: Body = !ready
-    ? { kind: "message", text: "Checking your account…", error: false }
-    : !user
-      ? { kind: "signedOut" }
-      : routes.status === "loading"
-        ? { kind: "message", text: "Loading the route…", error: false }
-        : routes.status === "error"
-          ? { kind: "message", text: routes.message, error: true }
-          : !route
-            ? {
-                kind: "message",
-                text: "This route was not found. It may have been deleted.",
-                error: true,
-              }
-            : { kind: "route", route };
-
   const pace = workouts.status === "ready" ? averagePace(workouts.data) : null;
   const routeMiles = route ? metersToMiles(route.distanceMeters) : 0;
+
+  let content: ReactNode;
+  if (!ready) content = <Notice text="Checking your account…" />;
+  else if (!user) content = <SignInPrompt title="Sign in to see your saved routes" />;
+  else if (routes.status === "loading") content = <Notice text="Loading the route…" />;
+  else if (routes.status === "error") content = <Notice text={routes.message} error />;
+  else if (!route) content = <Notice text="This route was not found. It may have been deleted." error />;
+  else
+    content = (
+      <>
+        <Text
+          accessibilityRole="header"
+          style={{ color: c.text, fontFamily: fonts.heading, fontSize: 26, lineHeight: 32 }}
+        >
+          {route.name}
+        </Text>
+        <Stats
+          items={[
+            { value: miles(route.distanceMeters), label: "Distance" },
+            ...(pace ? [{ value: `~${Math.round(pace * routeMiles)} min`, label: "At your pace" }] : []),
+            { value: savedOn(route), label: "Saved" },
+          ]}
+        />
+        <RouteBriefing routeId={route.routeId} hazards={hazards} />
+        {share.status === "shared" ? (
+          <Notice text="Shared with the community. It shows in Shares." />
+        ) : share.status === "error" ? (
+          <Notice text={share.message} error />
+        ) : null}
+        <View style={{ flexDirection: "row", gap: 10 }}>
+          <View style={{ flex: 1 }}>
+            <Button
+              secondary
+              title={share.status === "shared" ? "Shared" : "Share"}
+              loading={share.status === "sending"}
+              disabled={share.status === "shared"}
+              onPress={() => shareRoute(route)}
+            />
+          </View>
+          <View style={{ flex: 2 }}>
+            <Button
+              title="Log this route"
+              onPress={() => router.push({ pathname: "/log", params: { distance: routeMiles.toFixed(2) } })}
+            />
+          </View>
+        </View>
+      </>
+    );
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
@@ -118,54 +146,7 @@ export default function RouteDetailScreen({ routeId }: { routeId: number }) {
           {route && scene ? <RouteMap label={`Map of ${route.name}`} style={{ flex: 1 }} scene={scene} /> : null}
         </View>
         <View style={[column, { paddingHorizontal: 22, paddingTop: 16 }]}>
-          {body.kind === "signedOut" ? (
-            <SignInPrompt title="Sign in to see your saved routes" />
-          ) : body.kind === "message" ? (
-            <Notice text={body.text} error={body.error} />
-          ) : route ? (
-            <>
-              <Text
-                accessibilityRole="header"
-                style={{ color: c.text, fontFamily: fonts.heading, fontSize: 26, lineHeight: 32 }}
-              >
-                {route.name}
-              </Text>
-              <Stats
-                items={[
-                  { value: miles(route.distanceMeters), label: "Distance" },
-                  ...(pace
-                    ? [{ value: `~${Math.round(pace * routeMiles)} min`, label: "At your pace" }]
-                    : []),
-                  { value: savedOn(route), label: "Saved" },
-                ]}
-              />
-              <RouteBriefing routeId={route.routeId} hazards={hazards} />
-              {share.status === "shared" ? (
-                <Notice text="Shared with the community. It shows in Shares." />
-              ) : share.status === "error" ? (
-                <Notice text={share.message} error />
-              ) : null}
-              <View style={{ flexDirection: "row", gap: 10 }}>
-                <View style={{ flex: 1 }}>
-                  <Button
-                    secondary
-                    title={share.status === "shared" ? "Shared" : "Share"}
-                    loading={share.status === "sending"}
-                    disabled={share.status === "shared"}
-                    onPress={() => shareRoute(route)}
-                  />
-                </View>
-                <View style={{ flex: 2 }}>
-                  <Button
-                    title="Log this route"
-                    onPress={() =>
-                      router.push({ pathname: "/log", params: { distance: routeMiles.toFixed(2) } })
-                    }
-                  />
-                </View>
-              </View>
-            </>
-          ) : null}
+          {content}
         </View>
       </ScrollView>
       <View
