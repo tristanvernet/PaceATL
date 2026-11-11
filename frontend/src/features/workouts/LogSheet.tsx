@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -7,7 +7,8 @@ import { Button, Field, Notice, SectionLabel, SegmentedControl, column, useLeave
 import { useTheme } from "../../theme";
 import { SignInPrompt } from "../../components/SignInPrompt";
 import { useSession } from "../auth/SessionProvider";
-import { challengeSnapshot, isComplete, refreshChallenge } from "../today/challenge";
+import { challengeSnapshot, isComplete, refreshChallenge, type TodayChallenge } from "../today/challenge";
+import type { Load } from "../../api/useResource";
 import { savedToast, showToast } from "../today/toast";
 import { formatNumber } from "../../utils/format";
 import { NOTES_MAX, todayString, validateWorkout } from "./validation";
@@ -39,6 +40,12 @@ const first = (value: string | string[] | undefined) => (Array.isArray(value) ? 
 export function LogSheet() {
   const c = useTheme();
   const { user, ready } = useSession();
+  // The toast needs the challenge as it was before this save. Reading it when
+  // the sheet opens keeps it off the save path and can never observe the save.
+  const before = useRef<Promise<Load<TodayChallenge>> | null>(null);
+  useEffect(() => {
+    if (user && challengeSnapshot().status !== "ready") before.current = refreshChallenge();
+  }, [user]);
   const params = useLocalSearchParams<{ activity?: string; distance?: string }>();
   const initialActivity = first(params.activity);
   const initialDistance = Number(first(params.distance));
@@ -76,11 +83,11 @@ export function LogSheet() {
     if (Object.keys(found).length) return;
     setSaving(true);
     try {
-      let before = challengeSnapshot();
-      if (before.status !== "ready") before = await refreshChallenge();
+      const snapshot = challengeSnapshot();
+      const prior = snapshot.status === "ready" ? snapshot : await (before.current ?? refreshChallenge());
       const result = await apiRequest<LoggedWorkout>("/api/workouts", { method: "POST", body: JSON.stringify(values) });
       const after = await refreshChallenge();
-      showToast(savedToast(activity, isComplete(after) && !isComplete(before), result.unlocked));
+      showToast(savedToast(activity, isComplete(after) && !isComplete(prior), result.unlocked));
       close();
     } catch (e) {
       setSaveError(errorMessage(e, "Could not save. Try again."));
