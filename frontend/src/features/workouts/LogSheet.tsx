@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Platform, Pressable, ScrollView, Text, TextInput, View, type TextInputProps, type TextStyle } from "react-native";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { apiRequest, errorMessage } from "../../api/client";
@@ -113,8 +113,8 @@ export function LogSheet() {
             <View style={{ marginTop: 6, marginBottom: 22 }}>
               <SegmentedControl label="Activity" options={ACTIVITY_OPTIONS} value={activity} onChange={setActivity} />
             </View>
-            <BigNumber label="Distance" unit="mi" value={distance} onChangeText={edit("distanceMiles", setDistance)} error={errors.distanceMiles} keyboardType="decimal-pad" placeholder="0.00" />
-            <BigNumber label="Duration" unit="min" value={minutes} onChangeText={edit("durationMinutes", setMinutes)} error={errors.durationMinutes} keyboardType="number-pad" placeholder="0" />
+            <Field label="Distance" unit="mi" value={distance} onChangeText={edit("distanceMiles", setDistance)} error={errors.distanceMiles} keyboardType="decimal-pad" placeholder="0.00" />
+            <Field label="Duration" unit="min" value={minutes} onChangeText={edit("durationMinutes", setMinutes)} error={errors.durationMinutes} keyboardType="number-pad" placeholder="0" />
             <View style={{ borderBottomWidth: 1, borderBottomColor: c.border, paddingTop: 12, paddingBottom: 12, marginBottom: 14, gap: 10 }}>
               <SectionLabel flush>Date</SectionLabel>
               <SegmentedControl label="Date" options={DATE_OPTIONS} value={dateChoice} onChange={setDateChoice} />
@@ -148,30 +148,5 @@ export function LogSheet() {
         )}
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-// The focus underline replaces the browser outline, which RN types do not expose.
-const noWebOutline = (Platform.OS === "web" ? { outlineStyle: "none" } : null) as TextStyle | null;
-
-function BigNumber({ label, unit, error, ...props }: TextInputProps & { label: string; unit: string; error?: string }) {
-  const c = useTheme();
-  const [focused, setFocused] = useState(false);
-  return (
-    <View style={{ borderBottomWidth: focused ? 2 : 1, borderBottomColor: error ? c.error : focused ? c.primary : c.border, paddingTop: 12, paddingBottom: 10, marginBottom: 14 }}>
-      <Text style={{ color: c.muted, fontSize: 11, fontWeight: "700", letterSpacing: 1 }}>{label.toUpperCase()}</Text>
-      <View style={{ flexDirection: "row", alignItems: "baseline", marginTop: 4 }}>
-        <TextInput
-          accessibilityLabel={`${label} in ${unit}`}
-          placeholderTextColor={c.muted}
-          {...props}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          style={[noWebOutline, { flex: 1, minWidth: 0, color: c.text, fontSize: 34, fontWeight: "700", letterSpacing: -1.5, fontVariant: ["tabular-nums"], paddingVertical: 0 }]}
-        />
-        <Text style={{ color: c.muted, fontSize: 15, fontWeight: "600", marginLeft: 6 }}>{unit}</Text>
-      </View>
-      {error ? <Text accessibilityLiveRegion="polite" style={{ color: c.error, fontSize: 12, marginTop: 4 }}>{error}</Text> : null}
-    </View>
   );
 }

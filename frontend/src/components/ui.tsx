@@ -1,6 +1,7 @@
-import { Children, Fragment, type PropsWithChildren, type ReactNode } from "react";
+import { Children, Fragment, useState, type PropsWithChildren, type ReactNode } from "react";
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -8,6 +9,7 @@ import {
   TextInput,
   View,
   type TextInputProps,
+  type TextStyle,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -259,12 +261,60 @@ export function Notice({
     </View>
   );
 }
+// The focus underline replaces the browser outline, which RN types do not expose.
+const noWebOutline = (Platform.OS === "web" ? { outlineStyle: "none" } : null) as TextStyle | null;
+
+/** A labeled text input. With `unit` it becomes a large number on an underline, as in the log sheet. */
 export function Field({
   label,
   error,
+  unit,
   ...props
-}: TextInputProps & { label: string; error?: string }) {
+}: TextInputProps & { label: string; error?: string; unit?: string }) {
   const c = useTheme();
+  const [focused, setFocused] = useState(false);
+  if (unit)
+    return (
+      <View
+        style={{
+          borderBottomWidth: focused ? 2 : 1,
+          borderBottomColor: error ? c.error : focused ? c.primary : c.border,
+          paddingTop: 12,
+          paddingBottom: 10,
+          marginBottom: 14,
+        }}
+      >
+        <SectionLabel flush>{label}</SectionLabel>
+        <View style={{ flexDirection: "row", alignItems: "baseline", marginTop: 4 }}>
+          <TextInput
+            accessibilityLabel={`${label} in ${unit}`}
+            placeholderTextColor={c.muted}
+            {...props}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            style={[
+              noWebOutline,
+              {
+                flex: 1,
+                minWidth: 0,
+                color: c.text,
+                fontSize: 34,
+                fontWeight: "700",
+                letterSpacing: -1.5,
+                fontVariant: ["tabular-nums"],
+                paddingVertical: 0,
+              },
+            ]}
+          />
+          <Text style={{ color: c.muted, fontSize: 15, fontWeight: "600", marginLeft: 6 }}>{unit}</Text>
+        </View>
+        {!!error && (
+          <Text accessibilityLiveRegion="polite" style={{ color: c.error, fontSize: 12, marginTop: 4 }}>
+            {error}
+          </Text>
+        )}
+      </View>
+    );
   return (
     <View style={{ gap: 6, marginBottom: 16 }}>
       <SectionLabel flush>{label}</SectionLabel>
