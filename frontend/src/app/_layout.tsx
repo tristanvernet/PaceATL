@@ -7,7 +7,10 @@ import { AppearanceProvider, useAppearance } from "../theme";
 import { SessionProvider } from "../features/auth/SessionProvider";
 
 function RootStack() {
+  const [fontsLoaded, fontError] = useFonts({ Fraunces_600SemiBold });
   const { palette, dark } = useAppearance();
+  // A font failure falls back to the system font rather than blocking the app.
+  if (!fontsLoaded && !fontError) return null;
   return (
     <>
       <StatusBar style={dark ? "light" : "dark"} />
@@ -23,10 +26,8 @@ function RootStack() {
   );
 }
 
+// The providers sit above the font gate so the session request runs while the font loads.
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({ Fraunces_600SemiBold });
-  // A font failure falls back to the system font rather than blocking the app.
-  if (!fontsLoaded && !fontError) return null;
   return (
     <AppearanceProvider>
       <SessionProvider>
