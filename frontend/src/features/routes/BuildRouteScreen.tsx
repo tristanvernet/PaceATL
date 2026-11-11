@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,6 +24,7 @@ export default function BuildRouteScreen() {
   const [points, setPoints] = useState<LatLng[]>([]);
   const [name, setName] = useState("");
   const [save, setSave] = useState<Save>({ status: "idle" });
+  const scene = useMemo(() => ({ ...EMPTY_SCENE, draft: points }), [points]);
 
   const onMessage = (message: MapMessage) => {
     if (message.type === "tap") setPoints((current) => [...current, message.point]);
@@ -50,7 +51,7 @@ export default function BuildRouteScreen() {
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <RouteMap
         label="Route builder map"
-        scene={{ ...EMPTY_SCENE, draft: points }}
+        scene={scene}
         onMessage={onMessage}
         style={{ flex: 1 }}
       />

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
 import type { LatLng } from "../features/routes/geometry";
 import { useAppearance, type Palette } from "../theme";
@@ -15,13 +15,16 @@ export type MapScene = {
   draft: LatLng[];
   layers: Record<Layer, boolean>;
   selection: Selection | null;
-  /** The map fits to `points` each time `key` changes, keeping `inset` pixels clear for overlays. */
-  fit: { key: string; points: LatLng[]; inset: { top: number; bottom: number } };
+  /**
+   * The map fits to `bounds` (from `boundsOf`) each time `key` changes, keeping `inset` pixels
+   * clear for overlays.
+   */
+  fit: { key: string; bounds: LatLng[]; inset: { top: number; bottom: number } };
 };
 export type HostMessage = MapScene & {
   type: "scene";
   dark: boolean;
-  colors: Pick<Palette, "primary" | "error" | "panel" | "text" | "background">;
+  colors: Pick<Palette, "primary" | "error" | "panel" | "background">;
 };
 export type MapMessage =
   | { type: "tap"; point: LatLng }
@@ -35,8 +38,19 @@ export const EMPTY_SCENE: MapScene = {
   draft: [],
   layers: { routes: true, hotspots: true, hazards: true },
   selection: null,
-  fit: { key: "", points: [], inset: { top: 0, bottom: 0 } },
+  fit: { key: "", bounds: [], inset: { top: 0, bottom: 0 } },
 };
+
+/** The south-west and north-east corners around `points`, or the lone point itself. */
+export function boundsOf(points: LatLng[]): LatLng[] {
+  if (points.length < 2) return points;
+  const latitudes = points.map((p) => p.latitude);
+  const longitudes = points.map((p) => p.longitude);
+  return [
+    { latitude: Math.min(...latitudes), longitude: Math.min(...longitudes) },
+    { latitude: Math.max(...latitudes), longitude: Math.max(...longitudes) },
+  ];
+}
 
 const isCoordinate = (value: unknown, limit: number): value is number =>
   typeof value === "number" && Number.isFinite(value) && Math.abs(value) <= limit;
@@ -87,25 +101,23 @@ export type RouteMapProps = {
   label: string;
 };
 
+/** Posts the scene to the map page whenever it changes, so callers memoize `scene`. */
 export function useMapBridge(
   scene: MapScene,
   onMessage: ((message: MapMessage) => void) | undefined,
   post: (message: HostMessage) => void,
 ) {
   const { palette, dark } = useAppearance();
-  const { primary, error, panel, text, background } = palette;
-  const message: HostMessage = {
-    type: "scene",
-    dark,
-    colors: { primary, error, panel, text, background },
-    ...scene,
-  };
-  const json = JSON.stringify(message);
+  const { primary, error, panel, background } = palette;
+  const message = useMemo<HostMessage>(
+    () => ({ type: "scene", dark, colors: { primary, error, panel, background }, ...scene }),
+    [scene, dark, primary, error, panel, background],
+  );
   const latest = useRef({ message, onMessage, post });
   latest.current = { message, onMessage, post };
   useEffect(() => {
-    latest.current.post(latest.current.message);
-  }, [json]);
+    latest.current.post(message);
+  }, [message]);
   return useRef({
     onLoad() {
       latest.current.post(latest.current.message);
@@ -237,7 +249,7 @@ export const mapHtml = `<!DOCTYPE html>
     }
 
     const fit = scene.fit || {};
-    const fitPoints = ll(fit.points);
+    const fitPoints = ll(fit.bounds);
     if (fit.key && fit.key !== fitted && fitPoints.length) {
       const inset = fit.inset || {};
       if (fitPoints.length === 1) map.setView(fitPoints[0], 15);

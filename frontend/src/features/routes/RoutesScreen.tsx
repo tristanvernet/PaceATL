@@ -1,10 +1,10 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { RouteMap } from "../../components/RouteMap";
-import type { Layer, MapMessage, MapScene, Selection } from "../../components/routeMapBridge";
+import { boundsOf, type Layer, type MapMessage, type MapScene, type Selection } from "../../components/routeMapBridge";
 import { Button, Notice } from "../../components/ui";
 import { fonts, useTheme } from "../../theme";
 import { SignInPrompt } from "../../components/SignInPrompt";
@@ -66,6 +66,10 @@ function resolve(
   const hazard = hazards.find((h) => h.id === selection.id);
   return hazard ? { kind: "hazard", hazard } : null;
 }
+// Stable empties keep the memoized map scene from changing on every render while loading.
+const NO_ROUTES: SavedRoute[] = [];
+const NO_HOTSPOTS: Hotspot[] = [];
+const NO_HAZARDS: Hazard[] = [];
 const valueOf = <T,>(load: Load<T>, empty: T) => (load.status === "ready" ? load.data : empty);
 const settled = (load: Load<unknown>) => load.status !== "loading";
 
@@ -87,25 +91,29 @@ export default function RoutesScreen() {
   const routesLoad = savedRoutes.state;
   const hotspotsLoad = useApi<HotspotResult>("/api/hotspots").state;
   const hazardsLoad = useApi<Hazard[]>("/api/reports/approved").state;
-  const routes = user ? valueOf(routesLoad, []) : [];
-  const hotspots = valueOf(hotspotsLoad, null)?.hotspots ?? [];
-  const hazards = valueOf(hazardsLoad, []);
+  const routes = user ? valueOf(routesLoad, NO_ROUTES) : NO_ROUTES;
+  const hotspots = valueOf(hotspotsLoad, null)?.hotspots ?? NO_HOTSPOTS;
+  const hazards = valueOf(hazardsLoad, NO_HAZARDS);
 
   const allSettled =
     ready && (!user || settled(routesLoad)) && settled(hotspotsLoad) && settled(hazardsLoad);
-  const scene: MapScene = {
-    routes: routes.map((route) => ({ id: route.routeId, points: route.points })),
-    hotspots,
-    hazards,
-    draft: [],
-    layers,
-    selection,
-    fit: {
-      key: allSettled && bottomHeight ? "initial" : "",
-      points: routes.length ? routes.flatMap((route) => route.points) : [...hotspots, ...hazards],
-      inset: { top: insets.top + 52, bottom: bottomHeight },
-    },
-  };
+  const fitKey = allSettled && bottomHeight ? "initial" : "";
+  const scene = useMemo<MapScene>(
+    () => ({
+      routes: routes.map((route) => ({ id: route.routeId, points: route.points })),
+      hotspots,
+      hazards,
+      draft: [],
+      layers,
+      selection,
+      fit: {
+        key: fitKey,
+        bounds: boundsOf(routes.length ? routes.flatMap((route) => route.points) : [...hotspots, ...hazards]),
+        inset: { top: insets.top + 52, bottom: bottomHeight },
+      },
+    }),
+    [routes, hotspots, hazards, layers, selection, fitKey, insets.top, bottomHeight],
+  );
   const onMessage = (message: MapMessage) => {
     if (message.type === "moved") center.current = message.center;
     else if (message.type === "tap") setSelection(null);

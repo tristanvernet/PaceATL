@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { apiRequest, errorMessage } from "../../api/client";
 import { RouteMap } from "../../components/RouteMap";
-import { EMPTY_SCENE } from "../../components/routeMapBridge";
+import { EMPTY_SCENE, boundsOf, type MapScene } from "../../components/routeMapBridge";
 import { Button, Notice, column, useLeave } from "../../components/ui";
 import { fonts, useTheme } from "../../theme";
 import { SignInPrompt } from "../../components/SignInPrompt";
@@ -31,6 +31,7 @@ type Body =
   | { kind: "message"; text: string; error: boolean }
   | { kind: "route"; route: SavedRoute };
 const HERO_HEIGHT = 250;
+const NO_HAZARDS: Hazard[] = [];
 
 export default function RouteDetailScreen({ routeId }: { routeId: number }) {
   const c = useTheme();
@@ -46,7 +47,28 @@ export default function RouteDetailScreen({ routeId }: { routeId: number }) {
   const leave = useLeave("/routes");
   const route =
     routes.status === "ready" ? routes.data.find((r) => r.routeId === routeId) : undefined;
-  const hazards = route && reports.status === "ready" ? hazardsNear(route, reports.data) : [];
+  const hazards = useMemo(
+    () => (route && reports.status === "ready" ? hazardsNear(route, reports.data) : NO_HAZARDS),
+    [route, reports],
+  );
+  const scene = useMemo<MapScene | null>(
+    () =>
+      route
+        ? {
+            ...EMPTY_SCENE,
+            routes: [{ id: route.routeId, points: route.points }],
+            hazards,
+            layers: { routes: true, hotspots: false, hazards: true },
+            selection: { kind: "route", id: route.routeId },
+            fit: {
+              key: String(route.routeId),
+              bounds: boundsOf(route.points),
+              inset: { top: insets.top + 30, bottom: 0 },
+            },
+          }
+        : null,
+    [route, hazards, insets.top],
+  );
 
   async function shareRoute(route: SavedRoute) {
     setShare({ status: "sending" });
@@ -93,24 +115,7 @@ export default function RouteDetailScreen({ routeId }: { routeId: number }) {
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 28 }}>
         <View style={{ height: HERO_HEIGHT, backgroundColor: c.soft }}>
-          {route ? (
-            <RouteMap
-              label={`Map of ${route.name}`}
-              style={{ flex: 1 }}
-              scene={{
-                ...EMPTY_SCENE,
-                routes: [{ id: route.routeId, points: route.points }],
-                hazards,
-                layers: { routes: true, hotspots: false, hazards: true },
-                selection: { kind: "route", id: route.routeId },
-                fit: {
-                  key: String(route.routeId),
-                  points: route.points,
-                  inset: { top: insets.top + 30, bottom: 0 },
-                },
-              }}
-            />
-          ) : null}
+          {route && scene ? <RouteMap label={`Map of ${route.name}`} style={{ flex: 1 }} scene={scene} /> : null}
         </View>
         <View style={[column, { paddingHorizontal: 22, paddingTop: 16 }]}>
           {body.kind === "signedOut" ? (
