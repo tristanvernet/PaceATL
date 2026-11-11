@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from "react";
+import { Children, Fragment, type PropsWithChildren, type ReactNode } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -12,7 +12,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { spacing, useTheme } from "../theme";
+import { fonts, spacing, useTheme } from "../theme";
+
+type IconName = keyof typeof Ionicons.glyphMap;
 
 export function Screen({ children }: PropsWithChildren) {
   const c = useTheme();
@@ -25,12 +27,6 @@ export function Screen({ children }: PropsWithChildren) {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.screen}
       >
-        <View style={styles.brand}>
-          <Text style={[styles.brandText, { color: c.text }]}>PaceATL</Text>
-          <Text style={{ color: c.muted, fontSize: 12 }}>
-            Foundation preview
-          </Text>
-        </View>
         {children}
       </ScrollView>
     </SafeAreaView>
@@ -52,8 +48,8 @@ export function Heading({
         <Text
           style={{
             color: c.muted,
-            fontSize: 11,
-            letterSpacing: 1.5,
+            fontSize: 12,
+            letterSpacing: 0.5,
             fontWeight: "600",
           }}
         >
@@ -64,15 +60,16 @@ export function Heading({
         accessibilityRole="header"
         style={{
           color: c.text,
-          fontSize: 30,
-          fontWeight: "600",
-          letterSpacing: -0.9,
+          fontFamily: fonts.heading,
+          fontSize: 29,
+          lineHeight: 34,
+          letterSpacing: -0.6,
         }}
       >
         {title}
       </Text>
       {subtitle && (
-        <Text style={{ color: c.muted, fontSize: 15, lineHeight: 23 }}>
+        <Text style={{ color: c.muted, fontSize: 14, lineHeight: 21 }}>
           {subtitle}
         </Text>
       )}
@@ -106,9 +103,9 @@ export function Label({
     <Text
       style={{
         color: secondary ? c.muted : c.text,
-        fontSize: secondary ? 13 : 17,
-        lineHeight: secondary ? 21 : 24,
-        fontWeight: secondary ? "400" : "600",
+        fontSize: secondary ? 13 : 16,
+        lineHeight: secondary ? 20 : 22,
+        fontWeight: secondary ? "400" : "700",
       }}
     >
       {children}
@@ -137,26 +134,25 @@ export function Button({
       disabled={disabled || loading}
       onPress={onPress}
       style={({ pressed }) => ({
-        minHeight: 48,
-        paddingHorizontal: 16,
-        paddingVertical: 13,
-        borderRadius: 12,
-        backgroundColor: secondary ? c.soft : c.primary,
+        minHeight: 50,
+        paddingHorizontal: 18,
+        paddingVertical: 14,
+        borderRadius: 14,
+        backgroundColor: secondary ? c.panel : c.primary,
+        borderWidth: secondary ? 1 : 0,
+        borderColor: c.border,
         opacity: disabled ? 0.5 : pressed ? 0.75 : 1,
-        flexDirection: "row",
-        gap: 10,
         alignItems: "center",
-        justifyContent: "space-between",
+        justifyContent: "center",
       })}
     >
       {loading ? (
         <ActivityIndicator color={color} />
       ) : (
-        <Text style={{ color, fontSize: 15, fontWeight: "600", flexShrink: 1 }}>
+        <Text style={{ color, fontSize: 15, fontWeight: "700", textAlign: "center" }}>
           {title}
         </Text>
       )}
-      <Ionicons name="arrow-forward" color={color} size={18} />
     </Pressable>
   );
 }
@@ -173,7 +169,7 @@ export function Notice({
       accessibilityLiveRegion="polite"
       style={{
         padding: 14,
-        borderRadius: 12,
+        borderRadius: 14,
         backgroundColor: c.soft,
         marginVertical: 12,
       }}
@@ -198,7 +194,16 @@ export function Field({
   const c = useTheme();
   return (
     <View style={{ gap: 6, marginBottom: 16 }}>
-      <Text style={{ color: c.text, fontSize: 14 }}>{label}</Text>
+      <Text
+        style={{
+          color: c.muted,
+          fontSize: 11,
+          fontWeight: "700",
+          letterSpacing: 1,
+        }}
+      >
+        {label.toUpperCase()}
+      </Text>
       <TextInput
         accessibilityLabel={label}
         placeholderTextColor={c.muted}
@@ -209,7 +214,7 @@ export function Field({
             color: c.text,
             borderWidth: 1,
             borderColor: error ? c.error : c.border,
-            borderRadius: 12,
+            borderRadius: 14,
             padding: 13,
             fontSize: 16,
             minHeight: 48,
@@ -230,16 +235,156 @@ export function Field({
 }
 export function BackButton() {
   const router = useRouter();
+  const c = useTheme();
   return (
-    <View style={{ marginBottom: 18 }}>
-      <Button
-        title="Back"
-        secondary
-        onPress={() =>
-          router.canGoBack() ? router.back() : router.replace("/")
-        }
-      />
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Back"
+      onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
+      style={({ pressed }) => ({
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        marginBottom: 18,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: c.panel,
+        borderWidth: 1,
+        borderColor: c.border,
+        opacity: pressed ? 0.75 : 1,
+      })}
+    >
+      <Ionicons name="chevron-back" size={18} color={c.text} />
+    </Pressable>
+  );
+}
+export function SegmentedControl<T extends string>({
+  options,
+  value,
+  onChange,
+  compact = false,
+  label,
+}: {
+  options: readonly { value: T; label: string }[];
+  value: T;
+  onChange: (value: T) => void;
+  compact?: boolean;
+  label?: string;
+}) {
+  const c = useTheme();
+  return (
+    <View
+      accessibilityRole="radiogroup"
+      accessibilityLabel={label}
+      style={{
+        flexDirection: "row",
+        padding: compact ? 3 : 4,
+        borderRadius: compact ? 10 : 12,
+        backgroundColor: compact ? c.background : c.panel,
+        borderWidth: compact ? 0 : 1,
+        borderColor: c.border,
+      }}
+    >
+      {options.map((option) => {
+        const on = option.value === value;
+        return (
+          <Pressable
+            key={option.value}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: on }}
+            onPress={() => onChange(option.value)}
+            style={{
+              flex: compact ? 0 : 1,
+              alignItems: "center",
+              paddingVertical: compact ? 5 : 9,
+              paddingHorizontal: compact ? 9 : 4,
+              borderRadius: compact ? 8 : 9,
+              backgroundColor: on ? (compact ? c.panel : c.primary) : "transparent",
+            }}
+          >
+            <Text
+              style={{
+                fontSize: compact ? 12 : 13,
+                fontWeight: "600",
+                color: on ? (compact ? c.text : c.onPrimary) : c.muted,
+              }}
+            >
+              {option.label}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
+  );
+}
+export function ListGroup({ children }: PropsWithChildren) {
+  const c = useTheme();
+  const rows = Children.toArray(children);
+  return (
+    <View
+      style={{
+        backgroundColor: c.panel,
+        borderWidth: 1,
+        borderColor: c.border,
+        borderRadius: 16,
+        marginBottom: 14,
+        overflow: "hidden",
+      }}
+    >
+      {rows.map((row, i) => (
+        <Fragment key={i}>
+          {i > 0 && <View style={{ height: 1, backgroundColor: c.border }} />}
+          {row}
+        </Fragment>
+      ))}
+    </View>
+  );
+}
+export function ListRow({
+  title,
+  subtitle,
+  icon,
+  detail,
+  right,
+  onPress,
+}: {
+  title: string;
+  subtitle?: string;
+  icon?: IconName;
+  detail?: string;
+  right?: ReactNode;
+  onPress?: () => void;
+}) {
+  const c = useTheme();
+  const body = (
+    <>
+      {icon && <Ionicons name={icon} size={18} color={c.text} />}
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={{ color: c.text, fontSize: 14, fontWeight: "600" }}>{title}</Text>
+        {subtitle && <Text style={{ color: c.muted, fontSize: 12 }}>{subtitle}</Text>}
+      </View>
+      {right}
+      {detail && <Text style={{ color: c.muted, fontSize: 13 }}>{detail}</Text>}
+      {onPress && <Ionicons name="chevron-forward" size={16} color={c.muted} />}
+    </>
+  );
+  const row = {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    minHeight: 48,
+  } as const;
+  if (!onPress) return <View style={row}>{body}</View>;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [row, { opacity: pressed ? 0.7 : 1 }]}
+    >
+      {body}
+    </Pressable>
   );
 }
 export function Placeholder({
@@ -261,18 +406,11 @@ export function Placeholder({
 }
 const styles = StyleSheet.create({
   screen: {
-    padding: spacing.md,
+    paddingHorizontal: 22,
+    paddingTop: spacing.sm,
     paddingBottom: 36,
     maxWidth: 560,
     width: "100%",
     alignSelf: "center",
   },
-  brand: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 30,
-    gap: 12,
-  },
-  brandText: { fontSize: 20, fontWeight: "700", letterSpacing: -0.6 },
 });
