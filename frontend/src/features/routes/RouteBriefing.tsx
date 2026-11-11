@@ -1,6 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { apiRequest } from "../../api/client";
-import { Card, Label, Button, Notice } from "../../components/ui";
+import { Button } from "../../components/ui";
+import { useTheme } from "../../theme";
+import type { Hazard, Load } from "./types";
 
 type Briefing = {
   routeId: number;
@@ -13,13 +17,11 @@ type Briefing = {
     distanceMiles: number;
     terrain: { climbFeet: number; steepestGradePercent: number } | null;
     highlights: unknown[] | null;
-    weather: { temperature: number; aqi: number | null } | null;
+    weather: { temperature: number; humidity?: number; wind?: number; aqi: number | null } | null;
   };
   generatedAt: string;
 };
 
-const message = (error: unknown) =>
-  error instanceof Error ? error.message : "Could not prepare the briefing.";
 // MySQL-style UTC "YYYY-MM-DD HH:MM:SS", as in savedOn.
 const updatedAt = (briefing: Briefing) =>
   new Date(`${briefing.generatedAt.replace(" ", "T")}Z`).toLocaleTimeString([], {
@@ -27,90 +29,143 @@ const updatedAt = (briefing: Briefing) =>
     minute: "2-digit",
   });
 
-function Section({ title, items, empty }: { title: string; items: string[]; empty: string }) {
+function conditions({ facts }: Briefing) {
+  const w = facts.weather;
+  if (!w) return "Weather is unavailable right now.";
+  return [
+    `${w.temperature}°F`,
+    w.aqi != null && `AQI ${w.aqi}`,
+    w.wind != null && `wind ${w.wind} mph`,
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
+
+function Section({
+  icon,
+  title,
+  lines,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  lines: string[];
+}) {
+  const c = useTheme();
   return (
-    <>
-      <Label>{title}</Label>
-      {items.length ? (
-        items.map((item) => <Label key={item} secondary>• {item}</Label>)
-      ) : (
-        <Label secondary>{empty}</Label>
-      )}
-    </>
+    <View style={{ marginTop: 10 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <Ionicons name={icon} size={14} color={c.text} />
+        <Text style={{ color: c.text, fontSize: 12, fontWeight: "700" }}>{title}</Text>
+      </View>
+      {lines.map((line) => (
+        <Text
+          key={line}
+          style={{ color: c.text, fontSize: 13, lineHeight: 19, marginLeft: 20, marginTop: 3 }}
+        >
+          {line}
+        </Text>
+      ))}
+    </View>
   );
 }
 
-/** AI briefing for one saved route. Remount (key by routeId) when the selection changes. */
-export function RouteBriefing({ routeId }: { routeId: number }) {
-  const [briefing, setBriefing] = useState<Briefing | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const controller = useRef<AbortController | null>(null);
-  useEffect(() => () => controller.current?.abort(), []);
+/**
+ * AI briefing for one saved route, requested on mount. Reported hazards come from approved
+ * community reports near the route, so they show even when the briefing is still loading.
+ */
+export function RouteBriefing({ routeId, hazards }: { routeId: number; hazards: Hazard[] }) {
+  const c = useTheme();
+  const [state, setState] = useState<Load<Briefing>>({ status: "loading" });
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    setState({ status: "loading" });
+    // Gathering map data and writing the briefing can take up to a minute.
+    apiRequest<Briefing>(`/api/routes/${routeId}/briefing`, {
+      method: "POST",
+      signal: controller.signal,
+      timeoutMs: 60000,
+    })
+      .then((value) => {
+        if (!controller.signal.aborted) setState({ status: "ready", value });
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted)
+          setState({
+            status: "error",
+            message: error instanceof Error ? error.message : "Could not prepare the briefing.",
+          });
+      });
+    return () => controller.abort();
+  }, [routeId, attempt]);
 
-  async function load() {
-    controller.current = new AbortController();
-    setLoading(true);
-    setError("");
-    try {
-      // Gathering map data and writing the briefing can take up to a minute.
-      setBriefing(
-        await apiRequest<Briefing>(`/api/routes/${routeId}/briefing`, {
-          method: "POST",
-          signal: controller.current.signal,
-           timeoutMs: 60000,
+  const hazardLines = hazards.length
+    ? hazards.map((h) => (h.description ? `${h.title}. ${h.description}` : h.title))
+    : state.status === "ready" && state.value.hazards.length
+      ? state.value.hazards
+      : ["No hazards have been reported near this route."];
 
-        }),
-      );
-    } catch (e) {
-      if (!controller.current.signal.aborted) setError(message(e));
-    } finally {
-      if (!controller.current.signal.aborted) setLoading(false);
-    }
-  }
-
-  if (!briefing)
-    return (
-      <Card>
-        <Label>AI route briefing</Label>
-        <Label secondary>
-          Terrain, scenic highlights, reported hazards and current conditions, summarized before you go.
-        </Label>
-        {loading ? <Label secondary>Checking elevation, nearby places and weather…</Label> : null}
-        {error ? <Notice text={error} error /> : null}
-        <Button title={error ? "Try again" : "Get briefing"} loading={loading} onPress={load} />
-      </Card>
-    );
-
-  const { facts } = briefing;
-  const stats = [
-    `${facts.distanceMiles.toFixed(2)} mi`,
-    facts.terrain && `${facts.terrain.climbFeet} ft climb`,
-    facts.terrain && `${facts.terrain.steepestGradePercent}% steepest`,
-    facts.weather && `${facts.weather.temperature}°F`,
-    facts.weather?.aqi != null && `AQI ${facts.weather.aqi}`,
-  ].filter(Boolean);
   return (
-    <Card>
-      <Label>AI route briefing</Label>
-      <Label secondary>{stats.join(" • ")}</Label>
-      <Label secondary>{briefing.summary}</Label>
-      {briefing.terrain ? (
+    <View
+      accessibilityLabel="Before you go"
+      style={{ backgroundColor: c.soft, borderRadius: 16, padding: 14, marginBottom: 14 }}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 }}>
+        <Ionicons name="sparkles-outline" size={15} color={c.primary} />
+        <Text style={{ color: c.primary, fontSize: 13, fontWeight: "700" }}>Before you go</Text>
+      </View>
+      {state.status === "loading" ? (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 }}>
+          <ActivityIndicator size="small" color={c.muted} />
+          <Text style={{ color: c.muted, fontSize: 13 }}>
+            Checking elevation, nearby places and weather…
+          </Text>
+        </View>
+      ) : state.status === "error" ? (
+        <View style={{ gap: 8, marginTop: 8 }}>
+          <Text style={{ color: c.error, fontSize: 13 }}>{state.message}</Text>
+          <Button title="Try again" secondary onPress={() => setAttempt((n) => n + 1)} />
+        </View>
+      ) : (
         <>
-          <Label>Terrain</Label>
-          <Label secondary>{briefing.terrain}</Label>
+          <Text style={{ color: c.text, fontSize: 13, lineHeight: 19, marginTop: 6 }}>
+            {state.value.summary}
+          </Text>
+          <Section
+            icon="partly-sunny-outline"
+            title="Conditions"
+            lines={[conditions(state.value)]}
+          />
+          {state.value.terrain ? (
+            <Section icon="trending-up-outline" title="Terrain" lines={[state.value.terrain]} />
+          ) : null}
+        </>
+      )}
+      <Section icon="warning-outline" title="Reported hazards" lines={hazardLines} />
+      {state.status === "ready" ? (
+        <>
+          <Section
+            icon="leaf-outline"
+            title="Scenic highlights"
+            lines={
+              state.value.highlights.length
+                ? state.value.highlights
+                : [
+                    state.value.facts.highlights === null
+                      ? "Map highlights are unavailable right now."
+                      : "No named parks or landmarks nearby.",
+                  ]
+            }
+          />
+          {state.value.tips.length ? (
+            <Section icon="checkmark-circle-outline" title="Tips" lines={state.value.tips} />
+          ) : null}
+          <Text style={{ color: c.muted, fontSize: 11, lineHeight: 16, marginTop: 12 }}>
+            AI-generated at {updatedAt(state.value)} from map, elevation and weather data. Check
+            conditions yourself before heading out.
+          </Text>
         </>
       ) : null}
-      <Section
-        title="Scenic highlights"
-        items={briefing.highlights}
-        empty={facts.highlights === null ? "Map highlights are unavailable right now." : "No named parks or landmarks found nearby."}
-      />
-      <Section title="Reported hazards" items={briefing.hazards} empty="No hazards have been reported for this route." />
-      <Section title="Before you go" items={briefing.tips} empty="No tips for this route." />
-      <Label secondary>
-        AI-generated at {updatedAt(briefing)} from map, elevation and weather data. Check conditions yourself before heading out.
-      </Label>
-    </Card>
+    </View>
   );
 }
