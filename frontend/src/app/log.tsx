@@ -1,2 +1,1 @@
-import { WorkoutsScreen } from "../features/workouts/WorkoutsScreen";
-export default WorkoutsScreen;
+export { LogSheet as default } from "../features/workouts/LogSheet";
