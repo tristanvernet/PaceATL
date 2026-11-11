@@ -7,6 +7,7 @@ import { RouteMap } from "../../components/RouteMap";
 import { EMPTY_SCENE } from "../../components/routeMapBridge";
 import { Button, Notice, column, useLeave } from "../../components/ui";
 import { fonts, useTheme } from "../../theme";
+import { SignInPrompt } from "../../components/SignInPrompt";
 import { useSession } from "../auth/SessionProvider";
 import { RoundButton, Stats, passThrough } from "./controls";
 import { metersToMiles } from "./geometry";
@@ -113,10 +114,7 @@ export default function RouteDetailScreen({ routeId }: { routeId: number }) {
         </View>
         <View style={[column, { paddingHorizontal: 22, paddingTop: 16 }]}>
           {body.kind === "signedOut" ? (
-            <View style={{ gap: 10 }}>
-              <Text style={{ color: c.text, fontSize: 15 }}>Sign in to see your saved routes.</Text>
-              <Button title="Sign in" onPress={() => router.push("/welcome")} />
-            </View>
+            <SignInPrompt title="Sign in to see your saved routes" />
           ) : body.kind === "message" ? (
             <Notice text={body.text} error={body.error} />
           ) : route ? (

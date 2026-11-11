@@ -3,7 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { BackButton, Button, Heading, Notice, Screen } from "../../components/ui";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
-import { SignInPrompt } from "../auth/SignInPrompt";
+import { SignInPrompt } from "../../components/SignInPrompt";
 import { useApi } from "../../api/useResource";
 
 type Achievement = { key: string; name: string; description: string; icon: string; unlocked: boolean; earnedAt: string | null };

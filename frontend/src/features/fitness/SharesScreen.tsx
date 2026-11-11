@@ -5,7 +5,7 @@ import { apiRequest, errorMessage } from "../../api/client";
 import { Avatar, BackButton, Button, Field, Heading, ListGroup, Notice, Screen, SectionLabel, SegmentedControl } from "../../components/ui";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
-import { SignInPrompt } from "../auth/SignInPrompt";
+import { SignInPrompt } from "../../components/SignInPrompt";
 import { useApi } from "../../api/useResource";
 import { miles } from "../routes/types";
 

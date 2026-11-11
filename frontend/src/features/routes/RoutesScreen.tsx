@@ -7,6 +7,7 @@ import { RouteMap } from "../../components/RouteMap";
 import type { Layer, MapMessage, MapScene, Selection } from "../../components/routeMapBridge";
 import { Button, Notice } from "../../components/ui";
 import { fonts, useTheme } from "../../theme";
+import { SignInPrompt } from "../../components/SignInPrompt";
 import { useSession } from "../auth/SessionProvider";
 import { categoryLabel } from "../reports/categories";
 import { FloatingButton, LayerChip, RoundButton, Sheet, passThrough } from "./controls";
@@ -243,10 +244,7 @@ export default function RoutesScreen() {
           {!ready ? (
             <Meta>Checking your account…</Meta>
           ) : !user ? (
-            <View style={{ gap: 10, paddingVertical: 6 }}>
-              <Body>Sign in to save routes, get a briefing before you go, and log them.</Body>
-              <Button title="Sign in" onPress={() => router.push("/welcome")} />
-            </View>
+            <SignInPrompt compact text="Sign in to save routes, get a briefing before you go, and log them." />
           ) : routesLoad.status === "loading" ? (
             <Meta>Loading your routes…</Meta>
           ) : routesLoad.status === "error" ? (

@@ -7,6 +7,7 @@ import { RouteMap } from "../../components/RouteMap";
 import { EMPTY_SCENE, type MapMessage } from "../../components/routeMapBridge";
 import { Button, Field, Notice, useLeave } from "../../components/ui";
 import { fonts, useTheme } from "../../theme";
+import { SignInPrompt } from "../../components/SignInPrompt";
 import { useSession } from "../auth/SessionProvider";
 import { RoundButton, Sheet, passThrough } from "./controls";
 import { ROUTE_NAME_MAX, routeDistanceMeters, validateRoute, type LatLng } from "./geometry";
@@ -122,12 +123,7 @@ export default function BuildRouteScreen() {
           </View>
         </View>
         {!ready ? null : !user ? (
-          <View style={{ gap: 10 }}>
-            <Text style={{ color: c.muted, fontSize: 13 }}>
-              Sign in to save this route. Your drawing stays here while you do.
-            </Text>
-            <Button title="Sign in" onPress={() => router.push("/welcome")} />
-          </View>
+          <SignInPrompt compact text="Sign in to save this route. Your drawing stays here while you do." />
         ) : (
           <>
             <Field

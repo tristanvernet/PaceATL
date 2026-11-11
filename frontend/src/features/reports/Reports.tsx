@@ -1,21 +1,19 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { apiRequest, errorMessage } from "../../api/client";
 import {
   BackButton,
   Button,
-  Card,
   Field,
   Heading,
-  Label,
   Notice,
   Screen,
   SectionLabel,
   useLeave,
 } from "../../components/ui";
 import { useTheme } from "../../theme";
+import { SignInPrompt } from "../../components/SignInPrompt";
 import { useSession } from "../auth/SessionProvider";
 import type { LatLng } from "../routes/geometry";
 import { HAZARD_CATEGORIES, HAZARD_CATEGORY_KEYS, type HazardCategory } from "./categories";
@@ -25,7 +23,6 @@ type Submit =
 
 export function ReportScreen({ location, routeId }: { location: LatLng; routeId: number | null }) {
   const c = useTheme();
-  const router = useRouter();
   const { user, ready } = useSession();
   const [category, setCategory] = useState<HazardCategory>("hazard");
   const [title, setTitle] = useState("");
@@ -91,11 +88,10 @@ export function ReportScreen({ location, routeId }: { location: LatLng; routeId:
         subtitle="Tell other runners what to watch for. An admin reviews each report before it shows on the map."
       />
       {!ready ? null : !user ? (
-        <Card>
-          <Label>Sign in to report a hazard</Label>
-          <Label secondary>Reports are tied to your account so admins can follow up.</Label>
-          <Button title="Sign in" onPress={() => router.push("/welcome")} />
-        </Card>
+        <SignInPrompt
+          title="Sign in to report a hazard"
+          text="Reports are tied to your account so admins can follow up."
+        />
       ) : (
         <>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 16 }}>

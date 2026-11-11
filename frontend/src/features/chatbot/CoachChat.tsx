@@ -14,7 +14,7 @@ import { apiRequest, ApiError, errorMessage } from "../../api/client";
 import { column } from "../../components/ui";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
-import { SignInPrompt } from "../auth/SignInPrompt";
+import { SignInPrompt } from "../../components/SignInPrompt";
 
 type Message = { id: number; role: "user" | "coach"; text: string };
 type Status =

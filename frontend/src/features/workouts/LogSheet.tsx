@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Platform, Pressable, ScrollView, Text, TextInput, View, type TextInputProps, type TextStyle } from "react-native";
-import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { apiRequest, errorMessage } from "../../api/client";
-import { Button, Card, Field, Label, Notice, SectionLabel, SegmentedControl, column, useLeave } from "../../components/ui";
+import { Button, Field, Notice, SectionLabel, SegmentedControl, column, useLeave } from "../../components/ui";
 import { useTheme } from "../../theme";
+import { SignInPrompt } from "../../components/SignInPrompt";
 import { useSession } from "../auth/SessionProvider";
 import { challengeSnapshot, isComplete, refreshChallenge } from "../today/challenge";
 import { savedToast, showToast } from "../today/toast";
@@ -37,7 +38,6 @@ const first = (value: string | string[] | undefined) => (Array.isArray(value) ? 
 
 export function LogSheet() {
   const c = useTheme();
-  const router = useRouter();
   const { user, ready } = useSession();
   const params = useLocalSearchParams<{ activity?: string; distance?: string }>();
   const initialActivity = first(params.activity);
@@ -104,11 +104,10 @@ export function LogSheet() {
         contentContainerStyle={[column, { paddingHorizontal: 20, paddingBottom: 36 }]}
       >
         {!ready ? null : !user ? (
-          <Card>
-            <Label>Sign in to log activity</Label>
-            <Label secondary>Your runs, walks, and rides count toward daily challenges and badges.</Label>
-            <Button title="Sign in" onPress={() => router.replace("/welcome" as Href)} />
-          </Card>
+          <SignInPrompt
+            title="Sign in to log activity"
+            text="Your runs, walks, and rides count toward daily challenges and badges."
+          />
         ) : (
           <>
             <View style={{ marginTop: 6, marginBottom: 22 }}>

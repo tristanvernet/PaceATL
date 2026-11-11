@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter, type Href } from "expo-router";
+import { useRouter } from "expo-router";
 import { apiRequest, errorMessage } from "../../api/client";
 import { BackButton, Button, Card, Heading, Label, ListGroup, Notice, Screen, SectionLabel } from "../../components/ui";
 import { useTheme } from "../../theme";
+import { SignInPrompt } from "../../components/SignInPrompt";
 import { useSession } from "../auth/SessionProvider";
 import { refreshChallenge } from "../today/challenge";
 import { useApi } from "../../api/useResource";
@@ -59,10 +60,7 @@ export function HistoryScreen() {
         <BackButton />
         <Heading title="Activity history" />
         {!ready ? null : !user ? (
-          <Card>
-            <Label>Sign in to see your activity</Label>
-            <Button title="Sign in" onPress={() => router.push("/welcome" as Href)} />
-          </Card>
+          <SignInPrompt title="Sign in to see your activity" />
         ) : load.status === "loading" ? (
           <Notice text="Loading your activity…" />
         ) : load.status === "error" ? (
