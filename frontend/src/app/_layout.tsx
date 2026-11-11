@@ -16,7 +16,9 @@ function RootStack() {
           headerShown: false,
           contentStyle: { backgroundColor: palette.background },
         }}
-      />
+      >
+        <Stack.Screen name="log" options={{ presentation: "modal" }} />
+      </Stack>
     </>
   );
 }

@@ -10,9 +10,10 @@ import {
   Notice,
 } from "../../components/ui";
 import { apiRequest } from "../../api/client";
+import { AppearanceSettings } from "../../features/appearance/AppearanceSettings";
 import { useSession } from "../../features/auth/SessionProvider";
 
-export default function ProfileScreen() {
+export default function YouScreen() {
   const router = useRouter();
   const session = useSession();
   const [signingOut, setSigningOut] = useState(false);
@@ -72,8 +73,8 @@ export default function ProfileScreen() {
             onPress={() => router.push("/signup")}
           />
         </View>}
-        {(authError || session.error) && <Notice text={authError || session.error} error />}
-        {session.error && <Button title="Retry session check" onPress={() => { void session.refresh(); }} />}
+        {!!(authError || session.error) && <Notice text={authError || session.error} error />}
+        {!!session.error && <Button title="Retry session check" onPress={() => { void session.refresh(); }} />}
       </Card>
       <Card>
         <Label>Achievements & preferences</Label>
@@ -82,6 +83,7 @@ export default function ProfileScreen() {
           View the badges you earn as you record activity.
         </Label>
       </Card>
+      <AppearanceSettings />
       <Card>
         <Label>Development connection check</Label>
         <Label secondary>
@@ -93,7 +95,7 @@ export default function ProfileScreen() {
           loading={loading}
           onPress={checkBackend}
         />
-        {status && <Notice text={status} />}
+        {!!status && <Notice text={status} />}
       </Card>
     </Screen>
   );

@@ -26,7 +26,7 @@ export default function HomeScreen() {
         <Button
           title="Workout tips & tutorials"
           secondary
-          onPress={() => router.push("/learn")}
+          onPress={() => router.push("/coach")}
         />
         <Button title="Achievements & rewards" secondary onPress={() => router.push("/achievements")} />
         <Button

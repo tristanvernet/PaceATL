@@ -291,10 +291,10 @@ export function SegmentedControl<T extends string>({
           <Pressable
             key={option.value}
             accessibilityRole="radio"
-            accessibilityState={{ checked: on }}
+            aria-checked={on}
             onPress={() => onChange(option.value)}
             style={{
-              flex: compact ? 0 : 1,
+              flex: compact ? undefined : 1,
               alignItems: "center",
               paddingVertical: compact ? 5 : 9,
               paddingHorizontal: compact ? 9 : 4,

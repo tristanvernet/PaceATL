@@ -47,7 +47,7 @@ export default function AuthScreen({ mode }: { mode: "login" | "signup" }) {
       // Going back keeps the requesting screen's state, such as a drawn route.
       if (result.user.role === "admin") { router.replace("/admin"); return; }
       if (router.canGoBack()) router.back();
-      else router.replace("/profile");
+      else router.replace("/you");
     } catch (e) { setNotice(e instanceof Error ? e.message : "Unable to sign in."); }
     finally { setLoading(false); }
   }
