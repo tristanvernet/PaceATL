@@ -1,102 +1,157 @@
-import { useRef, useState, useEffect } from "react";
+import { useState } from "react";
+import { Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { View } from "react-native";
-import {
-  Screen,
-  Heading,
-  Card,
-  Label,
-  Button,
-  Notice,
-} from "../../components/ui";
-import { apiRequest } from "../../api/client";
+import { Screen, ListGroup, ListRow, Notice, Button } from "../../components/ui";
+import { fonts, useTheme } from "../../theme";
 import { AppearanceSettings } from "../../features/appearance/AppearanceSettings";
-import { useSession } from "../../features/auth/SessionProvider";
+import { useSession, type User } from "../../features/auth/SessionProvider";
+import { useApi, type Resource } from "../../features/auth/useResource";
+import { SignInPrompt } from "../../features/auth/SignInPrompt";
+import { DashboardCard } from "../../features/fitness/DashboardCard";
+import type { Rewards } from "../../features/rewards/RewardsScreen";
+import type { Share } from "../../features/fitness/SharesScreen";
+
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]!.toUpperCase())
+    .join("");
+const detail = <T,>(state: Resource<T>, format: (data: T) => string) =>
+  state.status === "ready" ? format(state.data) : undefined;
 
 export default function YouScreen() {
-  const router = useRouter();
+  const c = useTheme();
   const session = useSession();
-  const [signingOut, setSigningOut] = useState(false);
-  const [authError, setAuthError] = useState("");
-  async function logout() {
-    setSigningOut(true); setAuthError("");
-    try { await session.signOut(); }
-    catch (e) { setAuthError(e instanceof Error ? e.message : "Unable to log out."); }
-    finally { setSigningOut(false); }
-  }
-  const [status, setStatus] = useState("");
-  const [loading, setLoading] = useState(false);
-  const pending = useRef<AbortController | null>(null);
-  useEffect(() => () => pending.current?.abort(), []);
-  async function checkBackend() {
-    const controller = new AbortController();
-    pending.current?.abort();
-    pending.current = controller;
-    setLoading(true);
-    setStatus("");
+  return (
+    <Screen>
+      {!session.ready ? (
+        <Notice text="Checking your account…" />
+      ) : session.user ? (
+        <Account user={session.user} />
+      ) : (
+        <>
+          <Text
+            accessibilityRole="header"
+            style={{ fontFamily: fonts.heading, fontSize: 29, color: c.text, marginBottom: 16 }}
+          >
+            You
+          </Text>
+          {!!session.error && (
+            <>
+              <Notice text={session.error} error />
+              <Button title="Retry session check" secondary onPress={() => void session.refresh()} />
+            </>
+          )}
+          <SignInPrompt
+            title="Make PaceATL yours"
+            text="Track your workouts, earn achievements, and share progress with the community."
+          />
+        </>
+      )}
+      <AppearanceSettings />
+      {session.user && <SignOutRow />}
+    </Screen>
+  );
+}
+
+function Account({ user }: { user: User }) {
+  const c = useTheme();
+  const router = useRouter();
+  const admin = user.role === "admin";
+  const rewards = useApi<Rewards>("/api/rewards/");
+  const shares = useApi<Share[]>("/api/fitness/shares");
+  const reports = useApi<unknown[]>(admin ? "/api/admin/reports" : null);
+  const pending = reports.state.status === "ready" ? reports.state.data.length : 0;
+  return (
+    <>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 14, marginTop: 4, marginBottom: 18 }}>
+        <View
+          style={{
+            width: 54,
+            height: 54,
+            borderRadius: 27,
+            backgroundColor: c.primary,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Text style={{ color: c.onPrimary, fontSize: 18, fontWeight: "800" }}>{initials(user.name)}</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text accessibilityRole="header" style={{ color: c.text, fontFamily: fonts.heading, fontSize: 22 }}>
+            {user.name}
+          </Text>
+          <Text style={{ color: c.muted, fontSize: 13 }}>{user.email}</Text>
+        </View>
+      </View>
+      <DashboardCard />
+      <ListGroup>
+        <ListRow icon="list-outline" title="Activity history" onPress={() => router.push("/history")} />
+        <ListRow
+          icon="ribbon-outline"
+          title="Achievements"
+          detail={detail(rewards.state, (r) => `${r.achievements.filter((a) => a.unlocked).length} of ${r.achievements.length}`)}
+          onPress={() => router.push("/achievements")}
+        />
+        <ListRow
+          icon="share-social-outline"
+          title="My shares"
+          detail={detail(shares.state, (s) => String(s.filter((p) => p.isOwner).length))}
+          onPress={() => router.push("/shares")}
+        />
+        {admin && (
+          <ListRow
+            icon="shield-outline"
+            title="Admin portal"
+            right={
+              pending > 0 && (
+                <View
+                  accessibilityLabel={`${pending} reports waiting`}
+                  style={{ backgroundColor: c.primary, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }}
+                >
+                  <Text style={{ color: c.onPrimary, fontSize: 10, fontWeight: "800" }}>{pending}</Text>
+                </View>
+              )
+            }
+            onPress={() => router.push("/admin")}
+          />
+        )}
+      </ListGroup>
+    </>
+  );
+}
+
+function SignOutRow() {
+  const session = useSession();
+  const [state, setState] = useState<{ kind: "idle" } | { kind: "busy" } | { kind: "failed"; message: string }>({
+    kind: "idle",
+  });
+  async function signOut() {
+    setState({ kind: "busy" });
     try {
-      const health = await apiRequest<{ status: string; service: string }>(
-        "/api/health",
-        { signal: controller.signal },
-      );
-      if (!controller.signal.aborted)
-        setStatus(
-          health.status === "ok"
-            ? `${health.service} backend is reachable. This checks connectivity only, not database access.`
-            : "The backend reported an unexpected status.",
-        );
-    } catch (error) {
-      if (!controller.signal.aborted)
-        setStatus(
-          error instanceof Error ? error.message : "Connection failed.",
-        );
-    } finally {
-      if (!controller.signal.aborted) setLoading(false);
+      await session.signOut();
+      setState({ kind: "idle" });
+    } catch (e) {
+      setState({ kind: "failed", message: e instanceof Error ? e.message : "Unable to sign out." });
     }
   }
   return (
-    <Screen>
-      <Heading eyebrow="Your account" title="Your pace. Your profile." />
-      <Card>
-        <Label>{session.user ? `Welcome, ${session.user.name}` : "Your account"}</Label>
-        {session.user ? <>
-          <Label secondary>{session.user.email}</Label>
-          <Button title="Log out" loading={signingOut} onPress={logout} />
-        {session.user?.role === "admin" && (
-          <Button title="Admin portal" onPress={() => router.push("/admin")} 
-          />)}
-        </> : <View style={{ gap: 12 }}>
-          <Button title="Log in" disabled={!session.ready} onPress={() => router.push("/login")} />
-          <Button
-            title="Sign up"
-            secondary
-            onPress={() => router.push("/signup")}
-          />
-        </View>}
-        {!!(authError || session.error) && <Notice text={authError || session.error} error />}
-        {!!session.error && <Button title="Retry session check" onPress={() => { void session.refresh(); }} />}
-      </Card>
-      <Card>
-        <Label>Achievements & preferences</Label>
-        <Button title="My Achievements" onPress={() => router.push("/achievements")} />
-        <Label secondary>
-          View the badges you earn as you record activity.
-        </Label>
-      </Card>
-      <AppearanceSettings />
-      <Card>
-        <Label>Development connection check</Label>
-        <Label secondary>
-          Tests the shared API connection without needing a database.
-        </Label>
-        <Button
-          title="Check backend connection"
-          secondary
-          loading={loading}
-          onPress={checkBackend}
+    <>
+      <ListGroup>
+        <ListRow
+          icon="log-out-outline"
+          title={state.kind === "busy" ? "Signing out…" : "Sign out"}
+          onPress={state.kind === "busy" ? undefined : () => void signOut()}
         />
-        {!!status && <Notice text={status} />}
-      </Card>
-    </Screen>
+      </ListGroup>
+      {state.kind === "failed" && (
+        <>
+          <Notice text={state.message} error />
+          <Button title="Try again" secondary onPress={() => void signOut()} />
+        </>
+      )}
+    </>
   );
 }
