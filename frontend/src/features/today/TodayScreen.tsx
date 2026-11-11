@@ -2,13 +2,15 @@ import { useCallback, useEffect, type ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter, type Href } from "expo-router";
-import { Card, Label, Screen, SectionLabel } from "../../components/ui";
+import { Avatar, Card, Label, Screen, SectionLabel } from "../../components/ui";
 import { fonts, useTheme, type Palette } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { todayString } from "../workouts/validation";
 import { ACTIVITIES, isActivityType, type Workout } from "../workouts/types";
 import { refreshChallenge, resetChallenge, useChallenge, type ChallengeMetric, type TodayChallenge } from "./challenge";
 import { useApi, type Load } from "../../api/useResource";
+import { formatNumber } from "../../utils/format";
+import { metersToMiles } from "../routes/geometry";
 import { Toast } from "./Toast";
 
 type Weather = { temperature: number; humidity: number; wind: number; aqi: number | null };
@@ -31,7 +33,6 @@ type Post = {
   durationMinutes: number | null;
 };
 
-const round = (n: number) => String(Number(n.toFixed(1)));
 const METRICS: Record<ChallengeMetric, string> = { miles: "mi", minutes: "min", workouts: "workouts" };
 // Mirrors the thresholds in backend/src/features/rewards/service.js BADGES so
 // the tile can say how far away the next badge is.
@@ -157,7 +158,7 @@ function ChallengeCard({ c, load }: { c: Palette; load: Load<TodayChallenge> }) 
     <Hero
       c={c}
       kicker="TODAY'S CHALLENGE"
-      right={completed ? "DONE" : `${round(progress)} / ${round(challenge.target)} ${unit}`.toUpperCase()}
+      right={completed ? "DONE" : `${formatNumber(progress)} / ${formatNumber(challenge.target)} ${unit}`.toUpperCase()}
       title={challenge.title}
     >
       <View
@@ -171,8 +172,8 @@ function ChallengeCard({ c, load }: { c: Palette; load: Load<TodayChallenge> }) 
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 12, minHeight: 36 }}>
         <Text style={{ color: c.heroMuted, fontSize: 13 }}>
           {completed
-            ? `${round(progress)} ${unit} today`
-            : `${round(Math.max(0, challenge.target - progress))} ${unit} to go`}
+            ? `${formatNumber(progress)} ${unit} today`
+            : `${formatNumber(Math.max(0, challenge.target - progress))} ${unit} to go`}
         </Text>
         {completed ? (
           <Text style={{ color: c.heroAccent, fontSize: 13, fontWeight: "700" }}>✓ Complete</Text>
@@ -288,7 +289,7 @@ function NextBadge({ c, rewards }: { c: Palette; rewards: Rewards }) {
       c={c}
       icon="ribbon-outline"
       title={`Next badge: ${next.name}`}
-      subtitle={goal && away !== null ? `${round(away)} ${away === 1 && goal.unit === "workouts" ? "workout" : goal.unit} away` : next.description}
+      subtitle={goal && away !== null ? `${formatNumber(away)} ${away === 1 && goal.unit === "workouts" ? "workout" : goal.unit} away` : next.description}
       onPress={open}
     />
   );
@@ -301,12 +302,12 @@ function postLine(post: Post): { title: string; subtitle: string } {
   if (post.kind === "route")
     return {
       title: `${who} shared a route`,
-      subtitle: [post.routeName || post.title, post.distanceMeters ? `${round(post.distanceMeters / 1609.344)} mi` : null].filter(Boolean).join(" · "),
+      subtitle: [post.routeName || post.title, post.distanceMeters ? `${formatNumber(metersToMiles(post.distanceMeters))} mi` : null].filter(Boolean).join(" · "),
     };
   const noun = isActivityType(post.activityType) ? ACTIVITIES[post.activityType].noun : "workout";
   return {
     title: `${who} shared a ${noun}`,
-    subtitle: [post.title, post.distanceMiles != null ? `${round(post.distanceMiles)} mi` : null, post.durationMinutes != null ? `${post.durationMinutes} min` : null]
+    subtitle: [post.title, post.distanceMiles != null ? `${formatNumber(post.distanceMiles)} mi` : null, post.durationMinutes != null ? `${post.durationMinutes} min` : null]
       .filter(Boolean)
       .join(" · "),
   };
@@ -324,15 +325,12 @@ function Community({ c, posts }: { c: Palette; posts: Post[] }) {
       </View>
       {posts.map((post, i) => {
         const line = postLine(post);
-        const initials = post.author.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("");
         return (
           <View
             key={post.id}
             style={{ flexDirection: "row", gap: 10, alignItems: "center", paddingVertical: 10, borderBottomWidth: i < posts.length - 1 ? 1 : 0, borderBottomColor: c.border }}
           >
-            <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c.soft, alignItems: "center", justifyContent: "center" }}>
-              <Text style={{ color: c.primary, fontSize: 11, fontWeight: "800" }}>{initials}</Text>
-            </View>
+            <Avatar name={post.author} />
             <View style={{ flex: 1 }}>
               <Text style={{ color: c.text, fontSize: 13, fontWeight: "700" }}>{line.title}</Text>
               {line.subtitle ? <Text style={{ color: c.muted, fontSize: 12 }}>{line.subtitle}</Text> : null}

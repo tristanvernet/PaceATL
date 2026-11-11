@@ -328,6 +328,33 @@ export function SegmentedControl<T extends string>({
     </View>
   );
 }
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]!.toUpperCase())
+    .join("");
+export function Avatar({ name, large = false }: { name: string; large?: boolean }) {
+  const c = useTheme();
+  const size = large ? 54 : 30;
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: large ? c.primary : c.soft,
+      }}
+    >
+      <Text style={{ color: large ? c.onPrimary : c.primary, fontSize: large ? 18 : 11, fontWeight: "800" }}>
+        {initials(name)}
+      </Text>
+    </View>
+  );
+}
 export function ListGroup({ children }: PropsWithChildren) {
   const c = useTheme();
   const rows = Children.toArray(children);

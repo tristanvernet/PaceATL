@@ -8,6 +8,7 @@ import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { challengeSnapshot, isComplete, refreshChallenge } from "../today/challenge";
 import { savedToast, showToast } from "../today/toast";
+import { formatNumber } from "../../utils/format";
 import { NOTES_MAX, todayString, validateWorkout } from "./validation";
 import {
   ACTIVITIES,
@@ -42,7 +43,7 @@ export function LogSheet() {
   const initialActivity = first(params.activity);
   const initialDistance = Number(first(params.distance));
   const [activity, setActivity] = useState<ActivityType>(isActivityType(initialActivity) ? initialActivity : "run");
-  const [distance, setDistance] = useState(initialDistance > 0 ? String(Number(initialDistance.toFixed(2))) : "");
+  const [distance, setDistance] = useState(initialDistance > 0 ? formatNumber(initialDistance, 2) : "");
   const [minutes, setMinutes] = useState("");
   const [dateChoice, setDateChoice] = useState<DateChoice>("today");
   const [customDate, setCustomDate] = useState(yesterday());

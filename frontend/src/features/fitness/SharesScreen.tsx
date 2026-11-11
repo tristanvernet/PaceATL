@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { apiRequest, errorMessage } from "../../api/client";
-import { BackButton, Button, Field, Heading, ListGroup, Notice, Screen, SectionLabel, SegmentedControl } from "../../components/ui";
+import { Avatar, BackButton, Button, Field, Heading, ListGroup, Notice, Screen, SectionLabel, SegmentedControl } from "../../components/ui";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { SignInPrompt } from "../auth/SignInPrompt";
 import { useApi } from "../../api/useResource";
+import { miles } from "../routes/types";
 
 type Kind = "route" | "workout" | "goal";
 type Unit = "miles" | "minutes" | "workouts";
@@ -39,7 +40,7 @@ const UNITS = [
 ] as const;
 const DESCRIBE: Record<Kind, (s: Share) => string> = {
   goal: (s) => `Goal · ${s.target} ${s.unit}`,
-  route: (s) => `Route · ${s.routeName} · ${((s.distanceMeters ?? 0) / 1609.344).toFixed(1)} mi`,
+  route: (s) => `Route · ${s.routeName} · ${miles(s.distanceMeters ?? 0)}`,
   workout: (s) => `Workout · ${s.activityType} · ${s.distanceMiles} mi · ${s.durationMinutes} min`,
 };
 const sourceLabel = (s: Source) =>
@@ -198,20 +199,7 @@ function Community() {
         <ListGroup>
           {shares.state.data.map((s) => (
             <View key={s.id} style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 12 }}>
-              <View
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 15,
-                  backgroundColor: c.soft,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Text style={{ color: c.primary, fontSize: 11, fontWeight: "800" }}>
-                  {s.author.slice(0, 1).toUpperCase()}
-                </Text>
-              </View>
+              <Avatar name={s.author} />
               <View style={{ flex: 1, gap: 2 }}>
                 <Text style={{ color: c.text, fontSize: 14, fontWeight: "600" }}>{s.title}</Text>
                 <Text style={{ color: c.muted, fontSize: 12 }}>

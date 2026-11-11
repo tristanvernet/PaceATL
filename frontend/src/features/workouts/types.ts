@@ -31,4 +31,3 @@ export function formatPace(distanceMiles: number, durationMinutes: number) {
   const seconds = Math.round((durationMinutes * 60) / distanceMiles);
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
-export const formatMiles = (miles: number) => String(Number(miles.toFixed(2)));

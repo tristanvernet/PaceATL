@@ -9,7 +9,8 @@ import { useSession } from "../auth/SessionProvider";
 import { refreshChallenge } from "../today/challenge";
 import { useApi } from "../../api/useResource";
 import { Toast } from "../today/Toast";
-import { ACTIVITIES, formatMiles, formatPace, type Workout } from "./types";
+import { formatNumber } from "../../utils/format";
+import { ACTIVITIES, formatPace, type Workout } from "./types";
 import { todayString } from "./validation";
 
 function dayLabel(date: string) {
@@ -82,7 +83,7 @@ export function HistoryScreen() {
                   {list.map((w) => {
                     const activity = ACTIVITIES[w.activityType];
                     const pace = formatPace(w.distanceMiles, w.durationMinutes);
-                    const stats = [`${formatMiles(w.distanceMiles)} mi`, `${w.durationMinutes} min`, pace && `${pace} /mi`].filter(Boolean).join(" · ");
+                    const stats = [`${formatNumber(w.distanceMiles, 2)} mi`, `${w.durationMinutes} min`, pace && `${pace} /mi`].filter(Boolean).join(" · ");
                     return (
                       <View key={w.workoutId} testID={`workout-${w.workoutId}`} style={{ paddingHorizontal: 14, paddingVertical: 12, gap: 10 }}>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>

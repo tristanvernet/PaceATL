@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Screen, ListGroup, ListRow, Notice, Button } from "../../components/ui";
+import { Avatar, Screen, ListGroup, ListRow, Notice, Button } from "../../components/ui";
 import { fonts, useTheme } from "../../theme";
 import { AppearanceSettings } from "../../features/appearance/AppearanceSettings";
 import { useSession, type User } from "../../features/auth/SessionProvider";
@@ -12,13 +12,6 @@ import { DashboardCard } from "../../features/fitness/DashboardCard";
 import type { Rewards } from "../../features/rewards/RewardsScreen";
 import type { Share } from "../../features/fitness/SharesScreen";
 
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]!.toUpperCase())
-    .join("");
 const detail = <T,>(state: Load<T>, format: (data: T) => string) =>
   state.status === "ready" ? format(state.data) : undefined;
 
@@ -68,18 +61,7 @@ function Account({ user }: { user: User }) {
   return (
     <>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 14, marginTop: 4, marginBottom: 18 }}>
-        <View
-          style={{
-            width: 54,
-            height: 54,
-            borderRadius: 27,
-            backgroundColor: c.primary,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Text style={{ color: c.onPrimary, fontSize: 18, fontWeight: "800" }}>{initials(user.name)}</Text>
-        </View>
+        <Avatar name={user.name} large />
         <View style={{ flex: 1 }}>
           <Text accessibilityRole="header" style={{ color: c.text, fontFamily: fonts.heading, fontSize: 22 }}>
             {user.name}
