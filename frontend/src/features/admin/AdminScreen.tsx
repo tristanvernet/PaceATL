@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Text, View } from "react-native";
-import { BackButton, Button, Heading, Notice, Screen } from "../../components/ui";
+import { BackButton, Button, Heading, ListGroup, Notice, Screen, SectionLabel } from "../../components/ui";
 import { apiRequest, errorMessage } from "../../api/client";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
@@ -55,22 +55,19 @@ function Portal() {
       </>
     );
   const { reports, users } = state.data;
-  const sectionLabel = { color: c.muted, fontSize: 11, fontWeight: "700", letterSpacing: 1, margin: 4, marginBottom: 8 } as const;
-  const panel = { backgroundColor: c.panel, borderWidth: 1, borderColor: c.border, borderRadius: 16, marginBottom: 18 } as const;
-  const row = (i: number) => ({ padding: 14, gap: 10, borderTopWidth: i ? 1 : 0, borderColor: c.border });
 
   return (
     <>
       {!!error && <Notice text={error} error />}
-      <Text style={sectionLabel}>REPORTS WAITING · {reports.length}</Text>
+      <SectionLabel>{`Reports waiting · ${reports.length}`}</SectionLabel>
       {!reports.length ? (
         <Notice text="No reports waiting for review." />
       ) : (
-        <View style={panel}>
-          {reports.map((r, i) => {
+        <ListGroup>
+          {reports.map((r) => {
             const url = `/api/admin/reports/${r.id}`;
             return (
-              <View key={r.id} style={row(i)}>
+              <View key={r.id} style={{ padding: 14, gap: 10 }}>
                 <View style={{ gap: 3 }}>
                   <Text style={{ color: c.text, fontSize: 15, fontWeight: "700" }}>{r.title}</Text>
                   <Text style={{ color: c.muted, fontSize: 12 }}>
@@ -89,16 +86,16 @@ function Portal() {
               </View>
             );
           })}
-        </View>
+        </ListGroup>
       )}
 
-      <Text style={sectionLabel}>USERS · {users.length}</Text>
-      <View style={panel}>
-        {users.map((u, i) => {
+      <SectionLabel>{`Users · ${users.length}`}</SectionLabel>
+      <ListGroup>
+        {users.map((u) => {
           const url = `/api/admin/users/${u.id}`;
           const restricted = u.status === "restricted";
           return (
-            <View key={u.id} style={[row(i), { flexDirection: "row", alignItems: "center" }]}>
+            <View key={u.id} style={{ padding: 14, gap: 10, flexDirection: "row", alignItems: "center" }}>
               <View style={{ flex: 1, gap: 2 }}>
                 <Text style={{ color: c.text, fontSize: 14, fontWeight: "600" }}>{u.name}</Text>
                 <Text style={{ color: c.muted, fontSize: 12 }}>
@@ -118,7 +115,7 @@ function Portal() {
             </View>
           );
         })}
-      </View>
+      </ListGroup>
     </>
   );
 }

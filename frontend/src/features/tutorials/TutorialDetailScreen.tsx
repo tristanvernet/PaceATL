@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Linking, Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Screen, Heading, BackButton, Button, Notice } from "../../components/ui";
+import { Screen, Heading, BackButton, Button, Notice, SectionLabel } from "../../components/ui";
 import { apiRequest, ApiError, errorMessage } from "../../api/client";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
@@ -100,9 +100,7 @@ export default function TutorialDetailScreen() {
       )}
       {videoError && <Notice text="Could not open the video." error />}
 
-      <Text style={{ color: c.muted, fontSize: 11, fontWeight: "700", letterSpacing: 1, margin: 4, marginBottom: 8 }}>
-        STEPS
-      </Text>
+      <SectionLabel>Steps</SectionLabel>
       <View
         style={{
           backgroundColor: c.panel,

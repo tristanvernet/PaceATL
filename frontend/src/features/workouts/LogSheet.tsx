@@ -3,7 +3,7 @@ import { Platform, Pressable, ScrollView, Text, TextInput, View, type TextInputP
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { apiRequest, errorMessage } from "../../api/client";
-import { Button, Card, Field, Label, Notice, SegmentedControl, column, useLeave } from "../../components/ui";
+import { Button, Card, Field, Label, Notice, SectionLabel, SegmentedControl, column, useLeave } from "../../components/ui";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { challengeSnapshot, isComplete, refreshChallenge } from "../today/challenge";
@@ -116,7 +116,7 @@ export function LogSheet() {
             <BigNumber label="Distance" unit="mi" value={distance} onChangeText={edit("distanceMiles", setDistance)} error={errors.distanceMiles} keyboardType="decimal-pad" placeholder="0.00" />
             <BigNumber label="Duration" unit="min" value={minutes} onChangeText={edit("durationMinutes", setMinutes)} error={errors.durationMinutes} keyboardType="number-pad" placeholder="0" />
             <View style={{ borderBottomWidth: 1, borderBottomColor: c.border, paddingTop: 12, paddingBottom: 12, marginBottom: 14, gap: 10 }}>
-              <Text style={{ color: c.muted, fontSize: 11, fontWeight: "700", letterSpacing: 1 }}>DATE</Text>
+              <SectionLabel flush>Date</SectionLabel>
               <SegmentedControl label="Date" options={DATE_OPTIONS} value={dateChoice} onChange={setDateChoice} />
               {dateChoice === "other" ? (
                 <TextInput

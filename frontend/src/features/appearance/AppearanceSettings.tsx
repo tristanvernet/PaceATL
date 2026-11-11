@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from "react-native";
-import { ListGroup, ListRow, SegmentedControl } from "../../components/ui";
+import { ListGroup, ListRow, SectionLabel, SegmentedControl } from "../../components/ui";
 import {
   THEMES,
   THEME_NAMES,
@@ -19,19 +19,7 @@ export function AppearanceSettings() {
   const { appearance, setTheme, setMode } = useAppearance();
   return (
     <>
-      <Text
-        accessibilityRole="header"
-        style={{
-          color: c.muted,
-          fontSize: 11,
-          fontWeight: "700",
-          letterSpacing: 1,
-          margin: 4,
-          marginBottom: 8,
-        }}
-      >
-        APPEARANCE
-      </Text>
+      <SectionLabel>Appearance</SectionLabel>
       <ListGroup>
         <ListRow
           icon="contrast-outline"

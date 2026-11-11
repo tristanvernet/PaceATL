@@ -2,7 +2,7 @@ import { useCallback, useEffect, type ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter, type Href } from "expo-router";
-import { Card, Label, Screen } from "../../components/ui";
+import { Card, Label, Screen, SectionLabel } from "../../components/ui";
 import { fonts, useTheme, type Palette } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { todayString } from "../workouts/validation";
@@ -317,7 +317,7 @@ function Community({ c, posts }: { c: Palette; posts: Post[] }) {
   return (
     <View>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 18, marginHorizontal: 2, marginBottom: 2 }}>
-        <Text style={{ color: c.muted, fontSize: 12, fontWeight: "700", letterSpacing: 1 }}>COMMUNITY</Text>
+        <SectionLabel flush>Community</SectionLabel>
         <Pressable accessibilityRole="link" onPress={() => router.push("/shares" as Href)} hitSlop={10}>
           <Text style={{ color: c.primary, fontSize: 12, fontWeight: "700" }}>See all</Text>
         </Pressable>

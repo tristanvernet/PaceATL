@@ -12,6 +12,7 @@ import {
   Label,
   Notice,
   Screen,
+  SectionLabel,
   useLeave,
 } from "../../components/ui";
 import { useTheme } from "../../theme";
@@ -104,17 +105,7 @@ export function ReportScreen({ location, routeId }: { location: LatLng; routeId:
               , {location.longitude.toFixed(4)}
             </Text>
           </View>
-          <Text
-            style={{
-              color: c.muted,
-              fontSize: 11,
-              fontWeight: "700",
-              letterSpacing: 1,
-              marginBottom: 8,
-            }}
-          >
-            CATEGORY
-          </Text>
+          <SectionLabel>Category</SectionLabel>
           <View
             accessibilityRole="radiogroup"
             accessibilityLabel="Category"

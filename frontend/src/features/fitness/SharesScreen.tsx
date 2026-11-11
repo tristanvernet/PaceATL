@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { apiRequest, errorMessage } from "../../api/client";
-import { BackButton, Button, Field, Heading, Notice, Screen, SegmentedControl } from "../../components/ui";
+import { BackButton, Button, Field, Heading, ListGroup, Notice, Screen, SectionLabel, SegmentedControl } from "../../components/ui";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { SignInPrompt } from "../auth/SignInPrompt";
@@ -108,13 +108,11 @@ function Community() {
 
   const busy = status.kind === "busy";
   const choices = sources.state.status === "ready" ? sources.state.data[kind === "route" ? "routes" : "workouts"] : [];
-  const sectionLabel = { color: c.muted, fontSize: 11, fontWeight: "700", letterSpacing: 1, margin: 4, marginBottom: 8 } as const;
-  const panel = { backgroundColor: c.panel, borderWidth: 1, borderColor: c.border, borderRadius: 16, marginBottom: 14 } as const;
 
   return (
     <>
-      <Text style={sectionLabel}>NEW SHARE</Text>
-      <View style={[panel, { padding: 14, gap: 14 }]}>
+      <SectionLabel>New share</SectionLabel>
+      <View style={{ backgroundColor: c.panel, borderWidth: 1, borderColor: c.border, borderRadius: 16, marginBottom: 14, padding: 14, gap: 14 }}>
         <SegmentedControl
           label="What to share"
           options={KINDS}
@@ -186,7 +184,7 @@ function Community() {
         <Notice text={status.message} error={status.kind === "failed"} />
       )}
 
-      <Text style={sectionLabel}>COMMUNITY FEED</Text>
+      <SectionLabel>Community feed</SectionLabel>
       {shares.state.status === "loading" ? (
         <Notice text="Loading shares…" />
       ) : shares.state.status === "error" ? (
@@ -197,12 +195,9 @@ function Community() {
       ) : !shares.state.data.length ? (
         <Notice text="No one has shared anything yet. Be the first." />
       ) : (
-        <View style={panel}>
-          {shares.state.data.map((s, i) => (
-            <View
-              key={s.id}
-              style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderTopWidth: i ? 1 : 0, borderColor: c.border }}
-            >
+        <ListGroup>
+          {shares.state.data.map((s) => (
+            <View key={s.id} style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 12 }}>
               <View
                 style={{
                   width: 30,
@@ -236,7 +231,7 @@ function Community() {
               )}
             </View>
           ))}
-        </View>
+        </ListGroup>
       )}
     </>
   );

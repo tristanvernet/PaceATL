@@ -3,7 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, type Href } from "expo-router";
 import { apiRequest, errorMessage } from "../../api/client";
-import { BackButton, Button, Card, Heading, Label, ListGroup, Notice, Screen } from "../../components/ui";
+import { BackButton, Button, Card, Heading, Label, ListGroup, Notice, Screen, SectionLabel } from "../../components/ui";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { refreshChallenge } from "../today/challenge";
@@ -77,9 +77,7 @@ export function HistoryScreen() {
             {deleteError ? <Notice text={deleteError} error /> : null}
             {days.map(([date, list]) => (
               <View key={date}>
-                <Text style={{ color: c.muted, fontSize: 12, fontWeight: "700", letterSpacing: 1, marginBottom: 8, marginHorizontal: 2 }}>
-                  {dayLabel(date).toUpperCase()}
-                </Text>
+                <SectionLabel>{dayLabel(date)}</SectionLabel>
                 <ListGroup>
                   {list.map((w) => {
                     const activity = ACTIVITIES[w.activityType];

@@ -94,6 +94,21 @@ export function Card({ children }: PropsWithChildren) {
     </View>
   );
 }
+/** Small uppercase label over a group. `flush` drops the spacing for one inside a row or field. */
+export function SectionLabel({ children, flush = false }: { children: string; flush?: boolean }) {
+  const c = useTheme();
+  return (
+    <Text
+      accessibilityRole={flush ? undefined : "header"}
+      style={[
+        { color: c.muted, fontSize: 11, fontWeight: "700", letterSpacing: 1 },
+        !flush && { margin: 4, marginBottom: 8 },
+      ]}
+    >
+      {children.toUpperCase()}
+    </Text>
+  );
+}
 export function Label({
   children,
   secondary = false,
@@ -194,16 +209,7 @@ export function Field({
   const c = useTheme();
   return (
     <View style={{ gap: 6, marginBottom: 16 }}>
-      <Text
-        style={{
-          color: c.muted,
-          fontSize: 11,
-          fontWeight: "700",
-          letterSpacing: 1,
-        }}
-      >
-        {label.toUpperCase()}
-      </Text>
+      <SectionLabel flush>{label}</SectionLabel>
       <TextInput
         accessibilityLabel={label}
         placeholderTextColor={c.muted}
