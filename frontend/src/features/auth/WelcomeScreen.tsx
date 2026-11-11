@@ -1,9 +1,8 @@
 import { Pressable, Text, View } from "react-native";
 import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { column, useLeave } from "../../components/ui";
+import { HeroButton, column, useLeave } from "../../components/ui";
 import { fonts, useTheme } from "../../theme";
-import { HeroButton } from "./HeroButton";
 import { useSession } from "./SessionProvider";
 
 // Arcs cut from bordered circles stand in for the mockup's route lines, so the

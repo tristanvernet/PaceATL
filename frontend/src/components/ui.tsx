@@ -171,6 +171,64 @@ export function Button({
     </Pressable>
   );
 }
+// On hero surfaces the accent, not primary, is the button fill: BeltLine's
+// light primary is the same ink as its hero.
+export function HeroButton({
+  title,
+  onPress,
+  compact = false,
+}: {
+  title: string;
+  onPress: () => void;
+  compact?: boolean;
+}) {
+  const c = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => ({
+        minHeight: compact ? undefined : 50,
+        paddingVertical: compact ? 9 : 0,
+        paddingHorizontal: compact ? 14 : 18,
+        borderRadius: compact ? 12 : 14,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: c.heroAccent,
+        opacity: pressed ? 0.8 : 1,
+      })}
+    >
+      <Text style={{ color: c.hero, fontSize: compact ? 13 : 15, fontWeight: "800" }}>{title}</Text>
+    </Pressable>
+  );
+}
+/** The dark feature card: a kicker line, a serif title, then the card's own content. */
+export function Hero({
+  kicker,
+  icon,
+  right,
+  title,
+  label,
+  children,
+}: PropsWithChildren<{ kicker: string; icon?: IconName; right?: string; title: string; label?: string }>) {
+  const c = useTheme();
+  const kickerText = { color: c.heroAccent, fontSize: 11, fontWeight: "700", letterSpacing: 1.2 } as const;
+  return (
+    <View accessibilityLabel={label} style={{ backgroundColor: c.hero, borderRadius: 22, padding: 18 }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          {icon && <Ionicons name={icon} size={16} color={c.heroAccent} />}
+          <Text style={kickerText}>{kicker}</Text>
+        </View>
+        {right ? <Text style={kickerText}>{right}</Text> : null}
+      </View>
+      <Text style={{ color: c.heroText, fontFamily: fonts.heading, fontSize: 22, marginTop: 6, marginBottom: 12 }}>
+        {title}
+      </Text>
+      {children}
+    </View>
+  );
+}
 export function Notice({
   text,
   error = false,
