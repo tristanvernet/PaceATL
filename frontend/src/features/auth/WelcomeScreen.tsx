@@ -1,7 +1,7 @@
 import { Pressable, Text, View } from "react-native";
 import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { column } from "../../components/ui";
+import { column, useLeave } from "../../components/ui";
 import { fonts, useTheme } from "../../theme";
 import { HeroButton } from "./HeroButton";
 import { useSession } from "./SessionProvider";
@@ -18,6 +18,7 @@ export default function WelcomeScreen() {
   const c = useTheme();
   const router = useRouter();
   const { user } = useSession();
+  const leave = useLeave();
   if (user) return <Redirect href="/" />;
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.hero }}>
@@ -75,7 +76,7 @@ export default function WelcomeScreen() {
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
+          onPress={leave}
           style={({ pressed }) => ({ padding: 6, opacity: pressed ? 0.7 : 1 })}
         >
           <Text style={{ color: c.heroMuted, fontSize: 13, textAlign: "center" }}>

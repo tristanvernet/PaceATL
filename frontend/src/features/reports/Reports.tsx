@@ -12,6 +12,7 @@ import {
   Label,
   Notice,
   Screen,
+  useLeave,
 } from "../../components/ui";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
@@ -29,7 +30,7 @@ export function ReportScreen({ location, routeId }: { location: LatLng; routeId:
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [submit, setSubmit] = useState<Submit>({ status: "editing" });
-  const done = () => (router.canGoBack() ? router.back() : router.replace("/routes"));
+  const done = useLeave("/routes");
 
   async function send() {
     setSubmit({ status: "submitting" });

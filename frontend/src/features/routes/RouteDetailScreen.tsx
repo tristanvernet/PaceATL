@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { apiRequest, errorMessage } from "../../api/client";
 import { RouteMap } from "../../components/RouteMap";
 import { EMPTY_SCENE } from "../../components/routeMapBridge";
-import { Button, Notice, column } from "../../components/ui";
+import { Button, Notice, column, useLeave } from "../../components/ui";
 import { fonts, useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { RoundButton, Stats, passThrough } from "./controls";
@@ -42,7 +42,7 @@ export default function RouteDetailScreen({ routeId }: { routeId: number }) {
   const [share, setShare] = useState<Share>({ status: "idle" });
   const [menu, setMenu] = useState<Menu>({ status: "closed" });
 
-  const leave = () => (router.canGoBack() ? router.back() : router.replace("/routes"));
+  const leave = useLeave("/routes");
   const route =
     routes.status === "ready" ? routes.data.find((r) => r.routeId === routeId) : undefined;
   const hazards = route && reports.status === "ready" ? hazardsNear(route, reports.data) : [];

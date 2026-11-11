@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import { fonts, spacing, useTheme } from "../theme";
 
 type IconName = keyof typeof Ionicons.glyphMap;
@@ -233,14 +233,19 @@ export function Field({
     </View>
   );
 }
-export function BackButton() {
+/** Goes back, or to `fallback` when the screen was opened directly (a deep link or reload). */
+export function useLeave(fallback: Href = "/") {
   const router = useRouter();
+  return () => (router.canGoBack() ? router.back() : router.replace(fallback));
+}
+export function BackButton() {
+  const leave = useLeave();
   const c = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel="Back"
-      onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
+      onPress={leave}
       style={({ pressed }) => ({
         width: 36,
         height: 36,

@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { apiRequest, errorMessage } from "../../api/client";
 import { RouteMap } from "../../components/RouteMap";
 import { EMPTY_SCENE, type MapMessage } from "../../components/routeMapBridge";
-import { Button, Field, Notice } from "../../components/ui";
+import { Button, Field, Notice, useLeave } from "../../components/ui";
 import { fonts, useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { RoundButton, Sheet, passThrough } from "./controls";
@@ -19,6 +19,7 @@ export default function BuildRouteScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, ready } = useSession();
+  const leave = useLeave("/routes");
   const [points, setPoints] = useState<LatLng[]>([]);
   const [name, setName] = useState("");
   const [save, setSave] = useState<Save>({ status: "idle" });
@@ -66,11 +67,7 @@ export default function BuildRouteScreen() {
           },
         ]}
       >
-        <RoundButton
-          icon="chevron-back"
-          label="Back"
-          onPress={() => (router.canGoBack() ? router.back() : router.replace("/routes"))}
-        />
+        <RoundButton icon="chevron-back" label="Back" onPress={leave} />
         <View
           style={{
             backgroundColor: c.panel,

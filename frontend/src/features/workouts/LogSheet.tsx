@@ -3,7 +3,7 @@ import { Platform, Pressable, ScrollView, Text, TextInput, View, type TextInputP
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { apiRequest, errorMessage } from "../../api/client";
-import { Button, Card, Field, Label, Notice, SegmentedControl, column } from "../../components/ui";
+import { Button, Card, Field, Label, Notice, SegmentedControl, column, useLeave } from "../../components/ui";
 import { useTheme } from "../../theme";
 import { useSession } from "../auth/SessionProvider";
 import { challengeSnapshot, isComplete, refreshChallenge } from "../today/challenge";
@@ -55,7 +55,7 @@ export function LogSheet() {
     setter(text);
     setErrors(({ [key]: _, ...rest }) => rest);
   };
-  const close = () => (router.canGoBack() ? router.back() : router.replace("/"));
+  const close = useLeave();
   const workoutDate =
     dateChoice === "today" ? todayString() : dateChoice === "yesterday" ? yesterday() : customDate.trim();
   const pace = formatPace(toNumber(distance), toNumber(minutes));
